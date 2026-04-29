@@ -7,11 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/autoscan")
-# Исправляем URL если Railway дал postgresql:// вместо postgresql+asyncpg://
-if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+
+# Railway даёт URL в формате postgres:// — исправляем
+if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -28,7 +29,6 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def get_db():
-    """Dependency для получения сессии БД"""
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -41,7 +41,6 @@ async def get_db():
 
 
 async def init_db():
-    """Создание таблиц при старте"""
     from database.models import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -49,7 +48,6 @@ async def init_db():
 
 
 async def check_db():
-    """Проверка подключения к БД"""
     try:
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
