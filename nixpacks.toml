@@ -1,0 +1,8 @@
+[phases.install]
+cmds = [
+    "pip install -r autoscan/requirements.txt",
+    "playwright install chromium --with-deps"
+]
+
+[start]
+cmd = "cd autoscan && python main.py"
