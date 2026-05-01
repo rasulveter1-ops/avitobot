@@ -344,11 +344,11 @@ async def start_scheduler():
     """Запуск планировщика"""
     await parser.start()
     
-    # Основной цикл каждые 30 минут
+    # Основной цикл каждые 2 минуты
     scheduler.add_job(
         run_parse_cycle,
         "interval",
-        minutes=30,
+        minutes=2,
         id="main_parse",
         next_run_time=datetime.now()  # запускаем сразу при старте
     )
