@@ -91,7 +91,7 @@ class AvitoParser:
             return listings
 
         except Exception as e:
-            logger.error(f"Ошибка парсинга: {e}")
+            logger.error(f"Ошибка парсинга: {type(e).__name__}: {e}")
             return []
 
     async def _parse_html_page(self, html: str) -> list[dict]:
