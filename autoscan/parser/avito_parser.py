@@ -85,6 +85,10 @@ class AvitoParser:
                 logger.warning(f"Статус {resp.status_code}")
                 return []
 
+            # Диагностика — что вернул Авито
+            logger.info(f"Размер ответа: {len(resp.text)} символов")
+            logger.info(f"HTML начало: {resp.text[:500]}")
+
             # Парсим HTML страницу
             listings = await self._parse_html_page(resp.text)
             logger.info(f"Найдено: {len(listings)}")
