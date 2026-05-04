@@ -136,7 +136,7 @@ async def _analyze_text(listing_data: dict, market_price: int = None) -> dict:
         )
         
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5-20251001",
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -194,7 +194,7 @@ async def _analyze_photos(photo_urls: list) -> dict:
         })
         
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5-20251001",
             max_tokens=800,
             messages=[{"role": "user", "content": images_content}]
         )
@@ -257,7 +257,7 @@ async def get_market_price(brand: str, model: str, year: int, mileage: int, regi
         Например: 1500000"""
         
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5-20251001",
             max_tokens=50,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -291,7 +291,7 @@ async def ask_advisor(question: str, context: dict = None) -> str:
     
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5-20251001",
             max_tokens=500,
             system=system,
             messages=messages
