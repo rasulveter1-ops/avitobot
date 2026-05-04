@@ -91,11 +91,26 @@ class AvitoParser:
 
             data = resp.json()
 
-            if data.get("status") == "error":
+            # Диагностика структуры ответа
+            logger.info(f"Ключи ответа: {list(data.keys()) if isinstance(data, dict) else type(data)}")
+            logger.info(f"Сырой ответ: {str(data)[:500]}")
+
+            if isinstance(data, dict) and data.get("status") == "error":
                 logger.error(f"Ошибка API: {data.get('message')}")
                 return []
 
-            ads = data.get("data", [])
+            # Пробуем разные ключи где могут быть объявления
+            ads = []
+            if isinstance(data, list):
+                ads = data
+            elif isinstance(data, dict):
+                for key in ["data", "items", "ads", "results", "result"]:
+                    val = data.get(key)
+                    if isinstance(val, list) and val:
+                        ads = val
+                        logger.info(f"Нашли объявления в поле: {key}")
+                        break
+
             logger.info(f"Получено объявлений: {len(ads)}")
 
             if ads:
