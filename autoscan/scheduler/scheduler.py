@@ -9,7 +9,7 @@ from database.connection import AsyncSessionLocal
 from database.models import Listing, PriceHistory, User, UserFilter
 from sqlalchemy import select, and_
 
-MIN_SCORE_FOR_ALERT = 6.0
+MIN_SCORE_FOR_ALERT = 1.0
 
 parser = AvitoParser()
 scheduler = AsyncIOScheduler()
