@@ -13,7 +13,6 @@ RESTAPP_LOGIN = os.getenv("RESTAPP_LOGIN")
 RESTAPP_TOKEN = os.getenv("RESTAPP_TOKEN")
 RESTAPP_BASE = "https://rest-app.net/api"
 
-# category_id=9 — Авто на Авито
 AVITO_AUTO_CATEGORY = 9
 
 URGENT_KEYWORDS = [
@@ -55,15 +54,10 @@ class AvitoParser:
         radius: int = None,
         page: int = 1
     ) -> list[dict]:
-        """
-        Получение объявлений через rest-app.net API
-        Возвращает объявления за последние 35 минут
-        """
         if not RESTAPP_LOGIN or not RESTAPP_TOKEN:
             logger.error("RESTAPP_LOGIN или RESTAPP_TOKEN не заданы")
             return []
 
-        # Время для фильтрации — берём с небольшим запасом
         date2 = datetime.now()
         date1 = self.last_check_time or (date2 - timedelta(minutes=35))
 
@@ -73,10 +67,9 @@ class AvitoParser:
             "category_id": AVITO_AUTO_CATEGORY,
             "date1": date1.strftime("%Y-%m-%d %H:%M:%S"),
             "date2": date2.strftime("%Y-%m-%d %H:%M:%S"),
-            "limit": 50,  # тестовый лимит 50
+            "limit": 50,
         }
 
-        # Добавляем фильтры если заданы
         if price_min:
             params["price_min"] = price_min
         if price_max:
@@ -87,13 +80,13 @@ class AvitoParser:
                 params["city"] = city_name
 
         url = f"{RESTAPP_BASE}/ads"
-        logger.info(f"Запрос к rest-app.net: {date1} — {date2}, регион={region}, марка={brand}")
+        logger.info(f"Запрос rest-app.net: {date1} — {date2}, регион={region}, марка={brand}")
 
         try:
             resp = await self.client.get(url, params=params)
 
             if resp.status_code != 200:
-                logger.warning(f"Статус {resp.status_code}: {resp.text[:200]}")
+                logger.warning(f"Статус {resp.status_code}: {resp.text[:300]}")
                 return []
 
             data = resp.json()
@@ -105,12 +98,18 @@ class AvitoParser:
             ads = data.get("data", [])
             logger.info(f"Получено объявлений: {len(ads)}")
 
-            # Обновляем время последней проверки
+            if ads:
+                first = ads[0]
+                logger.info(f"Поля первого объявления: {list(first.keys())}")
+                for key, val in first.items():
+                    if val and key not in ["description"]:
+                        logger.info(f"  {key} = {str(val)[:100]}")
+
             self.last_check_time = date2
 
             listings = []
             for ad in ads:
-                listing = self._extract_listing(ad, brand, model)
+                listing = self._extract_listing(ad)
                 if listing:
                     listings.append(listing)
 
@@ -118,92 +117,82 @@ class AvitoParser:
             return listings
 
         except Exception as e:
-            logger.error(f"Ошибка запроса к API: {type(e).__name__}: {e}")
+            logger.error(f"Ошибка API: {type(e).__name__}: {e}")
             return []
 
-    def _extract_listing(self, ad: dict, filter_brand: str = None, filter_model: str = None) -> Optional[dict]:
-        """Извлечение данных из объекта объявления"""
+    def _extract_listing(self, ad: dict) -> Optional[dict]:
         try:
             avito_id = str(ad.get("id", ""))
             if not avito_id:
                 return None
 
-            title = ad.get("title", "")
-            price = ad.get("price", 0)
-            try:
-                price = int(str(price).replace(" ", "").replace("₽", ""))
-            except:
-                price = 0
+            title = ad.get("title", "") or ""
 
-            url = ad.get("url", "") or ad.get("link", "")
-            description = ad.get("description", "") or ""
-            city = ad.get("city", "") or ad.get("region", "")
-            date_str = ad.get("date", "") or ad.get("date_add", "")
+            price = 0
+            for price_field in ["price", "price_rub", "cost"]:
+                price_raw = ad.get(price_field)
+                if price_raw:
+                    try:
+                        price = int(str(price_raw).replace(" ", "").replace("₽", "").replace(",", ""))
+                        break
+                    except:
+                        pass
 
-            # Фото
+            url = ad.get("url") or ad.get("link") or ad.get("href") or ""
+            description = ad.get("description") or ad.get("text") or ""
+            city = ad.get("city") or ad.get("region") or ad.get("location") or ""
+
             photos = []
-            photo_fields = ["photo", "photos", "images", "image"]
-            for field in photo_fields:
-                val = ad.get(field)
+            for photo_field in ["photo", "photos", "images", "image", "img"]:
+                val = ad.get(photo_field)
                 if isinstance(val, list):
                     photos = [p for p in val if isinstance(p, str) and p.startswith("http")]
-                    break
+                    if photos:
+                        break
                 elif isinstance(val, str) and val.startswith("http"):
                     photos = [val]
                     break
 
-            # Параметры авто
-            params = ad.get("params", {}) or {}
             year = None
-            mileage = None
-
-            # Пробуем разные поля для года и пробега
-            year_raw = params.get("Год выпуска") or ad.get("year") or params.get("year")
-            if year_raw:
-                try:
-                    year = int(str(year_raw))
-                except:
-                    year_match = re.search(r"\b(19|20)\d{2}\b", str(year_raw))
-                    if year_match:
-                        year = int(year_match.group())
-
-            mileage_raw = params.get("Пробег") or ad.get("mileage") or params.get("km")
-            if mileage_raw:
-                mileage_clean = re.sub(r"[^\d]", "", str(mileage_raw))
-                if mileage_clean:
-                    mileage = int(mileage_clean)
-
-            # Если год/пробег в заголовке
+            for year_field in ["year", "god", "year_release"]:
+                year_raw = ad.get(year_field)
+                if year_raw:
+                    try:
+                        y = int(str(year_raw))
+                        if 1900 <= y <= 2030:
+                            year = y
+                            break
+                    except:
+                        pass
             if not year:
-                year_match = re.search(r"\b(19|20)\d{2}\b", title)
-                if year_match:
-                    year = int(year_match.group())
+                m = re.search(r"\b(19|20)\d{2}\b", title)
+                if m:
+                    year = int(m.group())
 
-            # Марка и модель
-            brand = ad.get("brand") or ad.get("mark")
-            model = ad.get("model")
+            mileage = None
+            for mileage_field in ["mileage", "km", "probeg", "km_age"]:
+                mileage_raw = ad.get(mileage_field)
+                if mileage_raw:
+                    mileage_clean = re.sub(r"[^\d]", "", str(mileage_raw))
+                    if mileage_clean:
+                        mileage = int(mileage_clean)
+                        break
+
+            brand = (ad.get("brand") or ad.get("mark") or
+                     ad.get("marka") or ad.get("car_brand"))
+            model = (ad.get("model") or ad.get("model_name") or
+                     ad.get("car_model"))
             if not brand:
                 brand, model = self.parse_brand_model_from_title(title)
 
-            # Фильтрация по марке если задана
-            if filter_brand and brand:
-                if filter_brand.lower() not in brand.lower():
-                    return None
-            if filter_model and model:
-                if filter_model.lower() not in model.lower():
-                    return None
-
-            # Продавец
-            seller_name = ad.get("name") or ad.get("seller") or ""
+            seller_name = (ad.get("name") or ad.get("seller") or
+                           ad.get("seller_name") or "")
             seller_type = "private"
-            seller_count = 1
 
-            # Ключевые слова
             full_text = f"{title} {description}".lower()
             urgent_keywords = [kw for kw in URGENT_KEYWORDS if kw in full_text]
             is_urgent = len(urgent_keywords) > 0
             has_dealer = any(kw in full_text for kw in DEALER_KEYWORDS)
-
             if has_dealer:
                 seller_type = "dealer"
 
@@ -219,7 +208,7 @@ class AvitoParser:
                 "photos": photos[:10],
                 "seller_name": seller_name,
                 "seller_type": seller_type,
-                "seller_listings_count": seller_count,
+                "seller_listings_count": 1,
                 "brand": brand,
                 "model": model,
                 "urgent_keywords": urgent_keywords,
@@ -232,17 +221,12 @@ class AvitoParser:
             return None
 
     async def parse_listing_detail(self, url: str) -> Optional[dict]:
-        """Получение деталей объявления по ID"""
         if not url:
             return None
-
-        # Извлекаем ID из URL
         id_match = re.search(r"_(\d+)$", url.rstrip("/"))
         if not id_match:
             return None
-
         ad_id = id_match.group(1)
-
         try:
             params = {
                 "login": RESTAPP_LOGIN,
@@ -250,7 +234,6 @@ class AvitoParser:
                 "id": ad_id,
             }
             resp = await self.client.get(f"{RESTAPP_BASE}/ad", params=params)
-
             if resp.status_code == 200:
                 data = resp.json()
                 if data.get("status") != "error":
@@ -261,7 +244,6 @@ class AvitoParser:
                     }
         except Exception as e:
             logger.error(f"Ошибка деталей {url}: {e}")
-
         return None
 
     def _slug_to_city(self, slug: str) -> Optional[str]:
