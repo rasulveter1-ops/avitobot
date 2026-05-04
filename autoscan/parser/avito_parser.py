@@ -91,40 +91,18 @@ class AvitoParser:
 
             data = resp.json()
 
-            # Диагностика структуры ответа
-            logger.info(f"Ключи ответа: {list(data.keys()) if isinstance(data, dict) else type(data)}")
-            logger.info(f"Сырой ответ: {str(data)[:500]}")
-
             if isinstance(data, dict) and data.get("status") == "error":
                 logger.error(f"Ошибка API: {data.get('message')}")
                 return []
 
-            # Пробуем разные ключи где могут быть объявления
-            ads = []
-            if isinstance(data, list):
-                ads = data
-            elif isinstance(data, dict):
-                for key in ["data", "items", "ads", "results", "result"]:
-                    val = data.get(key)
-                    if isinstance(val, list) and val:
-                        ads = val
-                        logger.info(f"Нашли объявления в поле: {key}")
-                        break
-
+            ads = data.get("data", []) if isinstance(data, dict) else data
             logger.info(f"Получено объявлений: {len(ads)}")
-
-            if ads:
-                first = ads[0]
-                logger.info(f"Поля первого объявления: {list(first.keys())}")
-                for key, val in first.items():
-                    if val and key not in ["description"]:
-                        logger.info(f"  {key} = {str(val)[:100]}")
 
             self.last_check_time = date2
 
             listings = []
             for ad in ads:
-                listing = self._extract_listing(ad)
+                listing = self._extract_listing(ad, brand)
                 if listing:
                     listings.append(listing)
 
@@ -135,81 +113,104 @@ class AvitoParser:
             logger.error(f"Ошибка API: {type(e).__name__}: {e}")
             return []
 
-    def _extract_listing(self, ad: dict) -> Optional[dict]:
+    def _extract_listing(self, ad: dict, filter_brand: str = None) -> Optional[dict]:
         try:
-            avito_id = str(ad.get("id", ""))
+            # ID — в API поле называется Id (с большой буквы!)
+            avito_id = str(ad.get("Id") or ad.get("id") or "")
             if not avito_id:
                 return None
 
             title = ad.get("title", "") or ""
+            price = ad.get("price", 0) or 0
+            try:
+                price = int(price)
+            except:
+                price = 0
 
-            price = 0
-            for price_field in ["price", "price_rub", "cost"]:
-                price_raw = ad.get(price_field)
-                if price_raw:
-                    try:
-                        price = int(str(price_raw).replace(" ", "").replace("₽", "").replace(",", ""))
-                        break
-                    except:
-                        pass
+            # В тестовом режиме url скрыт
+            url = ad.get("url") or ad.get("avito_id") or ""
+            if url == "hidden_in_demo":
+                url = f"https://www.avito.ru/items/{avito_id}"
 
-            url = ad.get("url") or ad.get("link") or ad.get("href") or ""
-            description = ad.get("description") or ad.get("text") or ""
-            city = ad.get("city") or ad.get("region") or ad.get("location") or ""
+            description = ad.get("description") or ""
 
+            # Локация
+            city = ad.get("city") or ""
+            region = ad.get("region") or ""
+            address = ad.get("address") or ""
+            location = city or region or address
+
+            # Фото — поле images содержит строку с URL
             photos = []
-            for photo_field in ["photo", "photos", "images", "image", "img"]:
-                val = ad.get(photo_field)
-                if isinstance(val, list):
-                    photos = [p for p in val if isinstance(p, str) and p.startswith("http")]
-                    if photos:
-                        break
-                elif isinstance(val, str) and val.startswith("http"):
-                    photos = [val]
-                    break
+            images_raw = ad.get("images") or ad.get("images_big") or ""
+            if isinstance(images_raw, str) and images_raw.startswith("http"):
+                # Может быть несколько URL через запятую
+                photo_list = [p.strip() for p in images_raw.split(",") if p.strip().startswith("http")]
+                photos = photo_list[:10]
+            elif isinstance(images_raw, list):
+                photos = [p for p in images_raw if isinstance(p, str) and p.startswith("http")][:10]
 
+            # Год — прямое поле year
             year = None
-            for year_field in ["year", "god", "year_release"]:
-                year_raw = ad.get(year_field)
-                if year_raw:
-                    try:
-                        y = int(str(year_raw))
-                        if 1900 <= y <= 2030:
-                            year = y
-                            break
-                    except:
-                        pass
+            year_raw = ad.get("year")
+            if year_raw:
+                try:
+                    y = int(str(year_raw))
+                    if 1900 <= y <= 2030:
+                        year = y
+                except:
+                    pass
+            # Также пробуем из params
             if not year:
-                m = re.search(r"\b(19|20)\d{2}\b", title)
-                if m:
-                    year = int(m.group())
+                for param in (ad.get("params") or []):
+                    if isinstance(param, dict) and "год" in param.get("name", "").lower():
+                        try:
+                            year = int(param.get("value", ""))
+                            break
+                        except:
+                            pass
 
+            # Пробег — в поле body ("33 000 км")
             mileage = None
-            for mileage_field in ["mileage", "km", "probeg", "km_age"]:
-                mileage_raw = ad.get(mileage_field)
-                if mileage_raw:
-                    mileage_clean = re.sub(r"[^\d]", "", str(mileage_raw))
-                    if mileage_clean:
-                        mileage = int(mileage_clean)
-                        break
+            body_raw = ad.get("body") or ""
+            if body_raw and "км" in str(body_raw).lower():
+                mileage_clean = re.sub(r"[^\d]", "", str(body_raw))
+                if mileage_clean:
+                    mileage = int(mileage_clean)
+            # Также из params
+            if not mileage:
+                for param in (ad.get("params") or []):
+                    if isinstance(param, dict) and "пробег" in param.get("name", "").lower():
+                        mileage_clean = re.sub(r"[^\d]", "", str(param.get("value", "")))
+                        if mileage_clean:
+                            mileage = int(mileage_clean)
+                            break
 
-            brand = (ad.get("brand") or ad.get("mark") or
-                     ad.get("marka") or ad.get("car_brand"))
-            model = (ad.get("model") or ad.get("model_name") or
-                     ad.get("car_model"))
+            # Марка и модель — поля marka и model
+            brand = ad.get("marka") or ad.get("brand") or ad.get("mark")
+            model = ad.get("model")
             if not brand:
                 brand, model = self.parse_brand_model_from_title(title)
 
-            seller_name = (ad.get("name") or ad.get("seller") or
-                           ad.get("seller_name") or "")
-            seller_type = "private"
+            # Фильтр по марке
+            if filter_brand and brand:
+                if filter_brand.lower() not in brand.lower():
+                    return None
 
+            # Продавец — postfix = "Компания" или "Частное лицо"
+            seller_name = ad.get("name") or ""
+            postfix = ad.get("postfix") or ""
+            seller_type = "dealer" if "компани" in postfix.lower() else "private"
+
+            # Ключевые слова
             full_text = f"{title} {description}".lower()
             urgent_keywords = [kw for kw in URGENT_KEYWORDS if kw in full_text]
             is_urgent = len(urgent_keywords) > 0
             has_dealer = any(kw in full_text for kw in DEALER_KEYWORDS)
             if has_dealer:
                 seller_type = "dealer"
+
+            logger.info(f"✅ Объявление: {title} | {price}₽ | {location}")
 
             return {
                 "avito_id": avito_id,
@@ -219,8 +220,8 @@ class AvitoParser:
                 "description": description,
                 "year": year,
                 "mileage": mileage,
-                "location": city,
-                "photos": photos[:10],
+                "location": location,
+                "photos": photos,
                 "seller_name": seller_name,
                 "seller_type": seller_type,
                 "seller_listings_count": 1,
@@ -236,7 +237,7 @@ class AvitoParser:
             return None
 
     async def parse_listing_detail(self, url: str) -> Optional[dict]:
-        if not url:
+        if not url or "hidden_in_demo" in url:
             return None
         id_match = re.search(r"_(\d+)$", url.rstrip("/"))
         if not id_match:
