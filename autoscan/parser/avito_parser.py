@@ -59,7 +59,7 @@ class AvitoParser:
             return []
 
         date2 = datetime.now()
-        date1 = self.last_check_time or (date2 - timedelta(minutes=35))
+        date1 = self.last_check_time = datetime.now() - timedelta(hours=24))
 
         params = {
             "login": RESTAPP_LOGIN,
