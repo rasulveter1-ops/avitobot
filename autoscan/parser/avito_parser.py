@@ -75,10 +75,8 @@ class AvitoParser:
         if price_max:
             params["price2"] = price_max
 
-        # Поиск по марке через параметр q
-        is_any_brand = not brand or brand.lower() in ["любая марка", "все", "any", "none"]
-        if not is_any_brand:
-            params["q"] = brand
+        # Не используем фильтр по марке в API — фильтруем сами после получения
+        pass
 
         url = f"{RESTAPP_BASE}/ads"
         logger.info(f"Запрос API: {date1.strftime('%H:%M')} — {date2.strftime('%H:%M')}, марка={brand or 'все'}")
