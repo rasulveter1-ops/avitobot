@@ -85,7 +85,7 @@ class AvitoParser:
             resp = await self.client.get(url, params=params)
 
             if resp.status_code != 200:
-                logger.warning(f"Статус {resp.status_code}")
+                logger.warning(f"Статус {resp.status_code}: {resp.text[:300]}")
                 return []
 
             data = resp.json()
