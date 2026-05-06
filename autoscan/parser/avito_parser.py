@@ -12,7 +12,6 @@ load_dotenv()
 RESTAPP_LOGIN = os.getenv("RESTAPP_LOGIN")
 RESTAPP_TOKEN = os.getenv("RESTAPP_TOKEN")
 RESTAPP_BASE = "https://rest-app.net/api"
-
 AVITO_AUTO_CATEGORY = 9
 
 URGENT_KEYWORDS = [
@@ -34,6 +33,7 @@ class AvitoParser:
 
     async def start(self):
         self.client = httpx.AsyncClient(timeout=30)
+        # Берём объявления за последние 35 минут
         self.last_check_time = datetime.now() - timedelta(minutes=35)
         logger.info("Парсер запущен (rest-app.net API)")
 
@@ -59,7 +59,7 @@ class AvitoParser:
             return []
 
         date2 = datetime.now()
-        date1 = self.last_check_time = datetime.now() - timedelta(hours=24)
+        date1 = self.last_check_time or (date2 - timedelta(minutes=35))
 
         params = {
             "login": RESTAPP_LOGIN,
@@ -70,25 +70,24 @@ class AvitoParser:
             "limit": 1000,
         }
 
-        # Фильтр по цене
         if price_min:
             params["price1"] = price_min
         if price_max:
             params["price2"] = price_max
 
-        # Поиск по тексту — марка в заголовке
+        # Поиск по марке через параметр q
         is_any_brand = not brand or brand.lower() in ["любая марка", "все", "any", "none"]
         if not is_any_brand:
             params["q"] = brand
 
         url = f"{RESTAPP_BASE}/ads"
-        logger.info(f"Запрос rest-app.net: {date1} — {date2}, марка={brand}")
+        logger.info(f"Запрос API: {date1.strftime('%H:%M')} — {date2.strftime('%H:%M')}, марка={brand or 'все'}")
 
         try:
             resp = await self.client.get(url, params=params)
 
             if resp.status_code != 200:
-                logger.warning(f"Статус {resp.status_code}: {resp.text[:300]}")
+                logger.warning(f"Статус {resp.status_code}")
                 return []
 
             data = resp.json()
@@ -98,8 +97,9 @@ class AvitoParser:
                 return []
 
             ads = data.get("data", []) if isinstance(data, dict) else data
-            logger.info(f"Получено объявлений: {len(ads)}")
+            logger.info(f"Получено: {len(ads)} объявлений")
 
+            # Обновляем время последней проверки
             self.last_check_time = date2
 
             listings = []
@@ -122,13 +122,14 @@ class AvitoParser:
                 return None
 
             title = ad.get("title", "") or ""
-            price = ad.get("price", 0) or 0
+            
+            price = 0
             try:
-                price = int(str(price).replace(" ", "").replace("₽", ""))
+                price = int(str(ad.get("price", 0)).replace(" ", "").replace("₽", ""))
             except:
-                price = 0
+                pass
 
-            url = ad.get("url") or ad.get("avito_id") or ""
+            url = ad.get("url") or ""
             if not url or url == "hidden_in_demo":
                 avito_url_id = ad.get("avito_id", "")
                 url = f"https://www.avito.ru/items/{avito_url_id}" if avito_url_id else ""
@@ -138,16 +139,17 @@ class AvitoParser:
             region_name = ad.get("region") or ""
             location = city or region_name
 
-            # Фото — строка с URL через запятую
+            # Фото через запятую
             photos = []
             images_raw = ad.get("images") or ad.get("images_big") or ""
             if isinstance(images_raw, str) and images_raw:
-                photo_list = [p.strip() for p in images_raw.split(",") if p.strip().startswith("http")]
-                photos = photo_list[:10]
+                photos = [p.strip() for p in images_raw.split(",") 
+                         if p.strip().startswith("http")][:10]
             elif isinstance(images_raw, list):
-                photos = [p for p in images_raw if isinstance(p, str) and p.startswith("http")][:10]
+                photos = [p for p in images_raw 
+                         if isinstance(p, str) and p.startswith("http")][:10]
 
-            # Год
+            # Год — прямое поле или из params
             year = None
             year_raw = ad.get("year")
             if year_raw:
@@ -157,7 +159,6 @@ class AvitoParser:
                         year = y
                 except:
                     pass
-            # Из params
             if not year:
                 for param in (ad.get("params") or []):
                     if isinstance(param, dict):
@@ -168,13 +169,12 @@ class AvitoParser:
                                 break
                             except:
                                 pass
-            # Из заголовка
             if not year:
                 m = re.search(r"\b(19|20)\d{2}\b", title)
                 if m:
                     year = int(m.group())
 
-            # Пробег — из поля body или params
+            # Пробег — из body или params
             mileage = None
             body_raw = ad.get("body") or ""
             if body_raw and "км" in str(body_raw).lower():
@@ -186,15 +186,13 @@ class AvitoParser:
                     if isinstance(param, dict):
                         name = param.get("name", "").lower()
                         if "пробег" in name:
-                            val = param.get("value", "")
-                            # Берём нижнюю границу диапазона "170 000 - 179 999"
-                            mileage_clean = re.sub(r"[^\d]", "", str(val).split("-")[0])
+                            val = str(param.get("value", "")).split("-")[0]
+                            mileage_clean = re.sub(r"[^\d]", "", val)
                             if mileage_clean:
                                 mileage = int(mileage_clean)
                                 break
-            # Из заголовка
             if not mileage:
-                m = re.search(r"(\d[\d\s]*)\s*км", title)
+                m = re.search(r"([\d\s]+)\s*км", title)
                 if m:
                     mileage_clean = re.sub(r"\s", "", m.group(1))
                     if mileage_clean:
@@ -218,8 +216,6 @@ class AvitoParser:
             has_dealer = any(kw in full_text for kw in DEALER_KEYWORDS)
             if has_dealer:
                 seller_type = "dealer"
-
-            pass  # убрали лишнее логирование
 
             return {
                 "avito_id": avito_id,
@@ -273,26 +269,6 @@ class AvitoParser:
             logger.error(f"Ошибка деталей {url}: {e}")
         return None
 
-    def _slug_to_city(self, slug: str) -> Optional[str]:
-        mapping = {
-            "moskva": "Москва",
-            "sankt-peterburg": "Санкт-Петербург",
-            "kazan": "Казань",
-            "novosibirsk": "Новосибирск",
-            "ekaterinburg": "Екатеринбург",
-            "krasnodar": "Краснодар",
-            "samara": "Самара",
-            "rostov-na-donu": "Ростов-на-Дону",
-            "nizhniy_novgorod": "Нижний Новгород",
-            "chelyabinsk": "Челябинск",
-            "ufa": "Уфа",
-            "voronezh": "Воронеж",
-            "perm": "Пермь",
-            "omsk": "Омск",
-            "volgograd": "Волгоград",
-        }
-        return mapping.get(slug)
-
     def parse_brand_model_from_title(self, title: str) -> tuple:
         brands = [
             "Toyota", "Honda", "Kia", "Hyundai", "Nissan", "Mazda",
@@ -302,7 +278,8 @@ class AvitoParser:
             "Porsche", "Land Rover", "Jaguar", "Chery", "Geely",
             "Haval", "Exeed", "Omoda", "Kaiyi", "Tank", "Belgee",
             "Jaecoo", "Voyah", "Zeekr", "Nordcross", "TENET",
-            "GAC", "Wey", "Lynk", "Jetour", "Qiyuan"
+            "GAC", "Wey", "Lynk", "Jetour", "Qiyuan", "HAVAL",
+            "Bentley", "Porsche", "Lamborghini", "Ferrari"
         ]
         title_lower = title.lower()
         for brand in brands:
