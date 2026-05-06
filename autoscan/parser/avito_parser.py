@@ -219,7 +219,7 @@ class AvitoParser:
             if has_dealer:
                 seller_type = "dealer"
 
-            logger.info(f"✅ {title} | {price:,}₽ | {location}".replace(",", " "))
+            pass  # убрали лишнее логирование
 
             return {
                 "avito_id": avito_id,
