@@ -299,7 +299,7 @@ async def start_scheduler():
     scheduler.add_job(
         run_parse_cycle,
         "interval",
-        minutes=2,
+        minutes=30,
         id="main_parse",
         next_run_time=datetime.now()
     )
