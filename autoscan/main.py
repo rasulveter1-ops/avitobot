@@ -34,7 +34,9 @@ async def main():
 
     await cleanup_old_listings()
 
-    await bot.delete_webhook(drop_pending_updates=True)
+   await bot.delete_webhook(drop_pending_updates=True)
+    import asyncio
+    await asyncio.sleep(2)
     logger.info("✅ Webhook сброшен")
 
     await start_scheduler()
