@@ -480,15 +480,23 @@ async def send_alert(user_telegram_id: int, listing, analysis: dict):
     keyboard = listing_actions_keyboard(listing.id, listing.url)
     
     try:
-        # Отправляем фото если есть
         if listing.photos:
-            await bot.send_photo(
-                chat_id=user_telegram_id,
-                photo=listing.photos[0],
-                caption=text,
-                parse_mode="HTML",
-                reply_markup=keyboard
-            )
+            try:
+                await bot.send_photo(
+                    chat_id=user_telegram_id,
+                    photo=listing.photos[0],
+                    caption=text,
+                    parse_mode="HTML",
+                    reply_markup=keyboard
+                )
+            except Exception:
+                # Если фото не загрузилось — отправляем текстом
+                await bot.send_message(
+                    chat_id=user_telegram_id,
+                    text=text,
+                    parse_mode="HTML",
+                    reply_markup=keyboard
+                )
         else:
             await bot.send_message(
                 chat_id=user_telegram_id,
