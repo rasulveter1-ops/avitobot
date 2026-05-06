@@ -67,20 +67,22 @@ class AvitoParser:
             "category_id": AVITO_AUTO_CATEGORY,
             "date1": date1.strftime("%Y-%m-%d %H:%M:%S"),
             "date2": date2.strftime("%Y-%m-%d %H:%M:%S"),
-            "limit": 50,
+            "limit": 1000,
         }
 
+        # Фильтр по цене
         if price_min:
-            params["price_min"] = price_min
+            params["price1"] = price_min
         if price_max:
-            params["price_max"] = price_max
-        if region and region != "rossiya":
-            city_name = self._slug_to_city(region)
-            if city_name:
-                params["city"] = city_name
+            params["price2"] = price_max
+
+        # Поиск по тексту — марка в заголовке
+        is_any_brand = not brand or brand.lower() in ["любая марка", "все", "any", "none"]
+        if not is_any_brand:
+            params["q"] = brand
 
         url = f"{RESTAPP_BASE}/ads"
-        logger.info(f"Запрос rest-app.net: {date1} — {date2}, регион={region}, марка={brand}")
+        logger.info(f"Запрос rest-app.net: {date1} — {date2}, марка={brand}")
 
         try:
             resp = await self.client.get(url, params=params)
@@ -102,7 +104,7 @@ class AvitoParser:
 
             listings = []
             for ad in ads:
-                listing = self._extract_listing(ad, brand)
+                listing = self._extract_listing(ad)
                 if listing:
                     listings.append(listing)
 
@@ -113,9 +115,8 @@ class AvitoParser:
             logger.error(f"Ошибка API: {type(e).__name__}: {e}")
             return []
 
-    def _extract_listing(self, ad: dict, filter_brand: str = None) -> Optional[dict]:
+    def _extract_listing(self, ad: dict) -> Optional[dict]:
         try:
-            # ID — в API поле называется Id (с большой буквы!)
             avito_id = str(ad.get("Id") or ad.get("id") or "")
             if not avito_id:
                 return None
@@ -123,34 +124,30 @@ class AvitoParser:
             title = ad.get("title", "") or ""
             price = ad.get("price", 0) or 0
             try:
-                price = int(price)
+                price = int(str(price).replace(" ", "").replace("₽", ""))
             except:
                 price = 0
 
-            # В тестовом режиме url скрыт
             url = ad.get("url") or ad.get("avito_id") or ""
-            if url == "hidden_in_demo":
-                url = f"https://www.avito.ru/items/{avito_id}"
+            if not url or url == "hidden_in_demo":
+                avito_url_id = ad.get("avito_id", "")
+                url = f"https://www.avito.ru/items/{avito_url_id}" if avito_url_id else ""
 
             description = ad.get("description") or ""
-
-            # Локация
             city = ad.get("city") or ""
-            region = ad.get("region") or ""
-            address = ad.get("address") or ""
-            location = city or region or address
+            region_name = ad.get("region") or ""
+            location = city or region_name
 
-            # Фото — поле images содержит строку с URL
+            # Фото — строка с URL через запятую
             photos = []
             images_raw = ad.get("images") or ad.get("images_big") or ""
-            if isinstance(images_raw, str) and images_raw.startswith("http"):
-                # Может быть несколько URL через запятую
+            if isinstance(images_raw, str) and images_raw:
                 photo_list = [p.strip() for p in images_raw.split(",") if p.strip().startswith("http")]
                 photos = photo_list[:10]
             elif isinstance(images_raw, list):
                 photos = [p for p in images_raw if isinstance(p, str) and p.startswith("http")][:10]
 
-            # Год — прямое поле year
+            # Год
             year = None
             year_raw = ad.get("year")
             if year_raw:
@@ -160,44 +157,56 @@ class AvitoParser:
                         year = y
                 except:
                     pass
-            # Также пробуем из params
+            # Из params
             if not year:
                 for param in (ad.get("params") or []):
-                    if isinstance(param, dict) and "год" in param.get("name", "").lower():
-                        try:
-                            year = int(param.get("value", ""))
-                            break
-                        except:
-                            pass
+                    if isinstance(param, dict):
+                        name = param.get("name", "").lower()
+                        if "год выпуска" in name or name == "год":
+                            try:
+                                year = int(param.get("value", ""))
+                                break
+                            except:
+                                pass
+            # Из заголовка
+            if not year:
+                m = re.search(r"\b(19|20)\d{2}\b", title)
+                if m:
+                    year = int(m.group())
 
-            # Пробег — в поле body ("33 000 км")
+            # Пробег — из поля body или params
             mileage = None
             body_raw = ad.get("body") or ""
             if body_raw and "км" in str(body_raw).lower():
                 mileage_clean = re.sub(r"[^\d]", "", str(body_raw))
                 if mileage_clean:
                     mileage = int(mileage_clean)
-            # Также из params
             if not mileage:
                 for param in (ad.get("params") or []):
-                    if isinstance(param, dict) and "пробег" in param.get("name", "").lower():
-                        mileage_clean = re.sub(r"[^\d]", "", str(param.get("value", "")))
-                        if mileage_clean:
-                            mileage = int(mileage_clean)
-                            break
+                    if isinstance(param, dict):
+                        name = param.get("name", "").lower()
+                        if "пробег" in name:
+                            val = param.get("value", "")
+                            # Берём нижнюю границу диапазона "170 000 - 179 999"
+                            mileage_clean = re.sub(r"[^\d]", "", str(val).split("-")[0])
+                            if mileage_clean:
+                                mileage = int(mileage_clean)
+                                break
+            # Из заголовка
+            if not mileage:
+                m = re.search(r"(\d[\d\s]*)\s*км", title)
+                if m:
+                    mileage_clean = re.sub(r"\s", "", m.group(1))
+                    if mileage_clean:
+                        mileage = int(mileage_clean)
 
-            # Марка и модель — поля marka и model
+            # Марка и модель
             brand = ad.get("marka") or ad.get("brand") or ad.get("mark")
             model = ad.get("model")
             if not brand:
                 brand, model = self.parse_brand_model_from_title(title)
 
-            # Фильтр по марке
-            if filter_brand and brand:
-                if filter_brand.lower() not in brand.lower():
-                    return None
-
-            # Продавец — postfix = "Компания" или "Частное лицо"
+            # Продавец
             seller_name = ad.get("name") or ""
             postfix = ad.get("postfix") or ""
             seller_type = "dealer" if "компани" in postfix.lower() else "private"
@@ -210,7 +219,7 @@ class AvitoParser:
             if has_dealer:
                 seller_type = "dealer"
 
-            logger.info(f"✅ Объявление: {title} | {price}₽ | {location}")
+            logger.info(f"✅ {title} | {price:,}₽ | {location}".replace(",", " "))
 
             return {
                 "avito_id": avito_id,
@@ -254,6 +263,8 @@ class AvitoParser:
                 data = resp.json()
                 if data.get("status") != "error":
                     ad = data.get("data", {})
+                    if isinstance(ad, list) and ad:
+                        ad = ad[0]
                     return {
                         "description": ad.get("description", ""),
                         "photos": ad.get("photos", []),
@@ -289,7 +300,9 @@ class AvitoParser:
             "Renault", "Ford", "Chevrolet", "Lexus", "Infiniti",
             "Subaru", "Mitsubishi", "Suzuki", "Volvo", "Jeep",
             "Porsche", "Land Rover", "Jaguar", "Chery", "Geely",
-            "Haval", "Exeed", "Omoda", "Kaiyi"
+            "Haval", "Exeed", "Omoda", "Kaiyi", "Tank", "Belgee",
+            "Jaecoo", "Voyah", "Zeekr", "Nordcross", "TENET",
+            "GAC", "Wey", "Lynk", "Jetour", "Qiyuan"
         ]
         title_lower = title.lower()
         for brand in brands:
