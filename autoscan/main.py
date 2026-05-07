@@ -6,7 +6,6 @@ from database.connection import init_db
 
 
 async def cleanup_old_listings():
-    """Очищаем старые объявления из базы"""
     from database.connection import AsyncSessionLocal
     from database.models import Listing, PriceHistory
     from sqlalchemy import delete, select, func
@@ -14,11 +13,8 @@ async def cleanup_old_listings():
     async with AsyncSessionLocal() as session:
         count_result = await session.execute(select(func.count(Listing.id)))
         count = count_result.scalar()
-
         if count > 0:
-            # Сначала удаляем историю цен
             await session.execute(delete(PriceHistory))
-            # Потом удаляем объявления
             await session.execute(delete(Listing))
             await session.commit()
             logger.info(f"🗑 Очищено {count} старых объявлений")
@@ -34,8 +30,7 @@ async def main():
 
     await cleanup_old_listings()
 
-   await bot.delete_webhook(drop_pending_updates=True)
-    import asyncio
+    await bot.delete_webhook(drop_pending_updates=True)
     await asyncio.sleep(2)
     logger.info("✅ Webhook сброшен")
 
