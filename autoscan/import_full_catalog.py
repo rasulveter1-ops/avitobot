@@ -392,7 +392,37 @@ async def import_file(filepath: str):
     await engine.dispose()
 
 
-async def download_from_gdrive(url: str, output_path: str):
+async def download_from_gdrive(file_id: str, output_path: str):
+    """Скачивание большого файла с Google Drive с подтверждением"""
+    import httpx
+    logger.info("Скачиваем файл с Google Drive...")
+
+    async with httpx.AsyncClient(timeout=600, follow_redirects=True) as client:
+        # Первый запрос — получаем confirm token
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        resp = await client.get(url)
+        
+        # Ищем confirm token в ответе
+        confirm = None
+        if b"confirm=" in resp.content:
+            import re
+            match = re.search(rb'confirm=([0-9A-Za-z_\-]+)', resp.content)
+            if match:
+                confirm = match.group(1).decode()
+        
+        # Второй запрос с confirm token
+        if confirm:
+            url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm={confirm}"
+            resp = await client.get(url)
+        
+        if resp.status_code != 200:
+            raise Exception(f"Ошибка: {resp.status_code}")
+        
+        with open(output_path, 'wb') as f:
+            f.write(resp.content)
+        
+        size_mb = len(resp.content) // (1024*1024)
+        logger.info(f"✅ Файл скачан: {size_mb} MB")(url: str, output_path: str):
     """Скачивание файла с Google Drive"""
     import httpx
     logger.info(f"Скачиваем файл с Google Drive...")
