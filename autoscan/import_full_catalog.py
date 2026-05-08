@@ -417,7 +417,11 @@ async def main():
     await create_tables(engine)
 
     if not os.path.exists(LOCAL_PATH) or os.path.getsize(LOCAL_PATH) < 10*1024*1024:
-        await download_from_gdrive(FILE_ID, LOCAL_PATH)
+        # Файл уже на сервере через Git LFS
+    if not os.path.exists(LOCAL_PATH):
+        raise Exception(f"Файл не найден: {LOCAL_PATH}")
+    size_mb = os.path.getsize(LOCAL_PATH) // (1024*1024)
+    logger.info(f"Файл найден: {size_mb} MB")
     else:
         size_mb = os.path.getsize(LOCAL_PATH) // (1024*1024)
         logger.info(f"Файл уже скачан: {size_mb} MB")
