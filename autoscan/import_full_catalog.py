@@ -12,7 +12,7 @@ from datetime import datetime
 from loguru import logger
 
 # URL файла на Google Drive
-GDRIVE_URL = "https://docs.google.com/spreadsheets/d/1IAhvdr6qMX15n4L1UDBlcBPN20k2-FD_/export?format=xlsx"
+GDRIVE_URL = "https://drive.google.com/uc?export=download&id=1IAhvdr6qMX15n4L1UDBlcBPN20k2-FD_&confirm=t"
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 if DATABASE_URL.startswith("postgres://"):
