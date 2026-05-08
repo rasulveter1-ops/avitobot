@@ -1,18 +1,16 @@
 """
 Скрипт импорта полного каталога авто с Google Drive в PostgreSQL
-Запуск: python import_full_catalog.py
 """
 import re
 import os
 import sys
 import asyncio
-import gzip
 import json
 from datetime import datetime
 from loguru import logger
 
-# URL файла на Google Drive
-GDRIVE_URL = "https://drive.google.com/uc?export=download&id=1IAhvdr6qMX15n4L1UDBlcBPN20k2-FD_&confirm=t"
+FILE_ID = "1IAhvdr6qMX15n4L1UDBlcBPN20k2-FD_"
+LOCAL_PATH = "/tmp/catalog.xlsx"
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 if DATABASE_URL.startswith("postgres://"):
@@ -20,7 +18,7 @@ if DATABASE_URL.startswith("postgres://"):
 elif DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-BATCH_SIZE = 500  # строк за один INSERT
+BATCH_SIZE = 500
 
 
 def parse_params(params_str: str) -> dict:
@@ -58,7 +56,7 @@ def extract_brand_model(title: str) -> tuple:
     return None, None
 
 
-def extract_year(params: dict, title: str) -> int | None:
+def extract_year(params: dict, title: str):
     year_raw = params.get("Год выпуска", "")
     if year_raw:
         try:
@@ -73,7 +71,7 @@ def extract_year(params: dict, title: str) -> int | None:
     return None
 
 
-def extract_mileage(params: dict, title: str) -> int | None:
+def extract_mileage(params: dict, title: str):
     mileage_raw = params.get("Пробег", "")
     if mileage_raw:
         clean = re.sub(r"[^\d]", "", str(mileage_raw).split("км")[0].split("-")[0])
@@ -94,7 +92,6 @@ def extract_mileage(params: dict, title: str) -> int | None:
 
 
 def process_row(row) -> dict | None:
-    """Обработка одной строки DataFrame"""
     try:
         avito_id = str(row.get("uID", "")).strip()
         if not avito_id or avito_id == 'nan':
@@ -115,7 +112,9 @@ def process_row(row) -> dict | None:
         user_type = str(row.get("Тип пользователя", "")).lower()
         seller_type = "dealer" if ("дилер" in user_type or "компания" in user_type) else "private"
 
-        desc = str(row.get("Описание", "")) if str(row.get("Описание", "")) != 'nan' else ""
+        desc = str(row.get("Описание", ""))
+        if desc == 'nan':
+            desc = ""
         full_text = f"{title} {desc}".lower()
         urgent_keywords = [kw for kw in [
             "срочно", "торг уместен", "торг при осмотре",
@@ -148,31 +147,37 @@ def process_row(row) -> dict | None:
         owners_raw = re.sub(r"[^\d]", "", str(params.get("Владельцев по ПТС", "0")))
         owners = int(owners_raw) if owners_raw else 0
 
+        def safe(val, max_len=None):
+            s = str(val) if val is not None and str(val) != 'nan' else None
+            if s and max_len:
+                s = s[:max_len]
+            return s
+
         return {
             "avito_id": avito_id,
             "published_at": published_at,
-            "title": title,
+            "title": safe(title, 500),
             "price": price,
-            "brand": brand,
-            "model": model,
+            "brand": safe(brand, 100),
+            "model": safe(model, 100),
             "year": year,
             "mileage": mileage,
-            "engine_volume": params.get("Объм двигателя", "")[:20] if params.get("Объм двигателя") else None,
-            "transmission": params.get("Коробка передач", "")[:50] if params.get("Коробка передач") else None,
-            "body_type": params.get("Тип кузова", "")[:50] if params.get("Тип кузова") else None,
-            "color": params.get("Цвет", "")[:50] if params.get("Цвет") else None,
-            "condition": params.get("Состояние", "")[:50] if params.get("Состояние") else None,
+            "engine_volume": safe(params.get("Объм двигателя"), 20),
+            "transmission": safe(params.get("Коробка передач"), 50),
+            "body_type": safe(params.get("Тип кузова"), 50),
+            "color": safe(params.get("Цвет"), 50),
+            "condition": safe(params.get("Состояние"), 50),
             "owners_count": owners,
-            "pts": params.get("ПТС", "")[:50] if params.get("ПТС") else None,
+            "pts": safe(params.get("ПТС"), 50),
             "exchange": "обмен" in str(params.get("Обмен", "")).lower(),
-            "seller_name": str(row.get("Контактное лицо", ""))[:200] if str(row.get("Контактное лицо", "")) != 'nan' else None,
+            "seller_name": safe(row.get("Контактное лицо"), 200),
             "seller_type": seller_type,
-            "region": str(row.get("Регион", ""))[:200] if str(row.get("Регион", "")) != 'nan' else None,
-            "city": str(row.get("Город", ""))[:100] if str(row.get("Город", "")) != 'nan' else None,
-            "district": str(row.get("Район", ""))[:100] if str(row.get("Район", "")) != 'nan' else None,
-            "address": str(row.get("Адрес", ""))[:300] if str(row.get("Адрес", "")) != 'nan' else None,
+            "region": safe(row.get("Регион"), 200),
+            "city": safe(row.get("Город"), 100),
+            "district": safe(row.get("Район"), 100),
+            "address": safe(row.get("Адрес"), 300),
             "description": desc[:2000] if desc else None,
-            "url": str(row.get("Ссылка на объявление", ""))[:500] if str(row.get("Ссылка на объявление", "")) != 'nan' else None,
+            "url": safe(row.get("Ссылка на объявление"), 500),
             "photos": photos[:2000] if photos else None,
             "is_urgent": is_urgent,
             "urgent_keywords": json.dumps(urgent_keywords, ensure_ascii=False),
@@ -180,11 +185,11 @@ def process_row(row) -> dict | None:
             "latitude": lat,
         }
     except Exception as e:
+        logger.error(f"Ошибка строки: {e}")
         return None
 
 
-async def create_table(engine):
-    """Создание таблицы каталога"""
+async def create_tables(engine):
     from sqlalchemy import text
     async with engine.begin() as conn:
         await conn.execute(text("""
@@ -222,29 +227,17 @@ async def create_table(engine):
                 imported_at TIMESTAMP DEFAULT NOW()
             )
         """))
-
-        # Индексы для быстрого поиска
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_catalog_brand ON catalog(brand)"))
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_catalog_price ON catalog(price)"))
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_catalog_year ON catalog(year)"))
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_catalog_city ON catalog(city)"))
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_catalog_mileage ON catalog(mileage)"))
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_catalog_seller_type ON catalog(seller_type)"))
-
-    logger.info("✅ Таблица catalog и индексы готовы")
-
-
-async def compute_market_stats(engine):
-    """Подсчёт статистики рынка после импорта"""
-    from sqlalchemy import text
-    async with engine.begin() as conn:
+        for idx in ["brand", "price", "year", "city", "mileage", "seller_type"]:
+            await conn.execute(text(
+                f"CREATE INDEX IF NOT EXISTS idx_catalog_{idx} ON catalog({idx})"
+            ))
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS market_stats (
                 id SERIAL PRIMARY KEY,
                 brand VARCHAR(100),
                 model VARCHAR(100),
                 year INTEGER,
-                region VARCHAR(200),
+                city VARCHAR(100),
                 avg_price INTEGER,
                 min_price INTEGER,
                 max_price INTEGER,
@@ -252,125 +245,146 @@ async def compute_market_stats(engine):
                 updated_at TIMESTAMP DEFAULT NOW()
             )
         """))
-
-        await conn.execute(text("TRUNCATE market_stats"))
-
-        await conn.execute(text("""
-            INSERT INTO market_stats (brand, model, year, region, avg_price, min_price, max_price, count)
-            SELECT
-                brand,
-                model,
-                year,
-                city as region,
-                AVG(price)::INTEGER as avg_price,
-                MIN(price) as min_price,
-                MAX(price) as max_price,
-                COUNT(*) as count
-            FROM catalog
-            WHERE brand IS NOT NULL
-              AND year IS NOT NULL
-              AND price > 50000
-              AND price < 50000000
-            GROUP BY brand, model, year, city
-            HAVING COUNT(*) >= 2
-        """))
-
-    logger.info("✅ Статистика рынка посчитана")
+    logger.info("✅ Таблицы и индексы готовы")
 
 
-async def import_file(filepath: str):
-    """Основная функция импорта"""
+async def download_from_gdrive(file_id: str, output_path: str):
+    import httpx
+    logger.info("Скачиваем файл с Google Drive...")
+
+    session_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(600.0, connect=30.0),
+        follow_redirects=True
+    ) as client:
+        # Первый запрос
+        resp = await client.get(session_url)
+        logger.info(f"Первый запрос: статус {resp.status_code}, размер {len(resp.content)} байт")
+
+        # Ищем confirm token
+        confirm = None
+        content_str = resp.content.decode('utf-8', errors='ignore')
+
+        patterns = [
+            r'confirm=([0-9A-Za-z_\-]+)',
+            r'"confirm","([^"]+)"',
+            r'name="confirm"\s+value="([^"]+)"',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, content_str)
+            if match:
+                confirm = match.group(1)
+                logger.info(f"Найден confirm token: {confirm}")
+                break
+
+        if confirm:
+            download_url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm={confirm}"
+        else:
+            # Пробуем альтернативный URL
+            download_url = f"https://drive.usercontent.google.com/download?id={file_id}&export=download&confirm=t"
+            logger.info("Confirm не найден, пробуем usercontent URL")
+
+        # Скачиваем файл
+        logger.info(f"Скачиваем: {download_url[:80]}...")
+        total_size = 0
+
+        async with client.stream("GET", download_url) as stream_resp:
+            logger.info(f"Статус скачивания: {stream_resp.status_code}")
+            if stream_resp.status_code not in [200, 206]:
+                raise Exception(f"Ошибка скачивания: {stream_resp.status_code}")
+
+            with open(output_path, 'wb') as f:
+                async for chunk in stream_resp.aiter_bytes(chunk_size=1024*1024):
+                    f.write(chunk)
+                    total_size += len(chunk)
+                    if total_size % (100*1024*1024) == 0:
+                        logger.info(f"Скачано: {total_size // (1024*1024)} MB")
+
+    size_mb = total_size // (1024*1024)
+    logger.info(f"✅ Файл скачан: {size_mb} MB")
+
+    if size_mb < 10:
+        raise Exception(f"Файл слишком маленький ({size_mb} MB) — возможно скачалась HTML страница")
+
+
+async def import_file(filepath: str, engine):
     import pandas as pd
-    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
     from sqlalchemy import text
 
-    engine = create_async_engine(DATABASE_URL, echo=False, pool_size=5)
     AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-    await create_table(engine)
+    logger.info(f"Читаем Excel файл... (может занять 3-5 минут для 430к строк)")
+    df_full = pd.read_excel(filepath, engine='openpyxl')
+    total_rows = len(df_full)
+    logger.info(f"✅ Файл прочитан: {total_rows:,} строк".replace(",", " "))
 
-    logger.info(f"Читаем файл: {filepath}")
-    logger.info("Это может занять несколько минут для большого файла...")
-
-    # Читаем файл чанками
-    if filepath.endswith('.csv'):
-        reader = pd.read_csv(filepath, encoding='utf-8', sep=';',
-                            on_bad_lines='skip', chunksize=BATCH_SIZE)
-    else:
-        # Excel — читаем целиком но обрабатываем батчами
-        logger.info("Читаем Excel файл... (может занять 2-5 минут)")
-        df_full = pd.read_excel(filepath, engine='openpyxl')
-        logger.info(f"Файл прочитан: {len(df_full)} строк")
-        # Создаём итератор чанков
-        chunks = [df_full[i:i+BATCH_SIZE] for i in range(0, len(df_full), BATCH_SIZE)]
-        reader = chunks
-
-    total = 0
     success = 0
     skipped = 0
 
     async with AsyncSessionLocal() as session:
-        for chunk_num, chunk in enumerate(reader):
-            rows_to_insert = []
+        for chunk_start in range(0, total_rows, BATCH_SIZE):
+            chunk = df_full[chunk_start:chunk_start + BATCH_SIZE]
 
             for _, row in chunk.iterrows():
                 processed = process_row(row.to_dict())
-                if processed:
-                    rows_to_insert.append(processed)
-                else:
+                if not processed:
+                    skipped += 1
+                    continue
+                try:
+                    await session.execute(text("""
+                        INSERT INTO catalog
+                        (avito_id, published_at, title, price, brand, model, year,
+                         mileage, engine_volume, transmission, body_type, color,
+                         condition, owners_count, pts, exchange, seller_name,
+                         seller_type, region, city, district, address, description,
+                         url, photos, is_urgent, urgent_keywords, longitude, latitude)
+                        VALUES
+                        (:avito_id, :published_at, :title, :price, :brand, :model, :year,
+                         :mileage, :engine_volume, :transmission, :body_type, :color,
+                         :condition, :owners_count, :pts, :exchange, :seller_name,
+                         :seller_type, :region, :city, :district, :address, :description,
+                         :url, :photos, :is_urgent, :urgent_keywords, :longitude, :latitude)
+                        ON CONFLICT (avito_id) DO UPDATE SET
+                            price = EXCLUDED.price,
+                            published_at = EXCLUDED.published_at
+                    """), processed)
+                    success += 1
+                except Exception as e:
                     skipped += 1
 
-            if rows_to_insert:
-                for row_data in rows_to_insert:
-                    try:
-                        await session.execute(text("""
-                            INSERT INTO catalog
-                            (avito_id, published_at, title, price, brand, model, year,
-                             mileage, engine_volume, transmission, body_type, color,
-                             condition, owners_count, pts, exchange, seller_name,
-                             seller_type, region, city, district, address, description,
-                             url, photos, is_urgent, urgent_keywords, longitude, latitude)
-                            VALUES
-                            (:avito_id, :published_at, :title, :price, :brand, :model, :year,
-                             :mileage, :engine_volume, :transmission, :body_type, :color,
-                             :condition, :owners_count, :pts, :exchange, :seller_name,
-                             :seller_type, :region, :city, :district, :address, :description,
-                             :url, :photos, :is_urgent, :urgent_keywords, :longitude, :latitude)
-                            ON CONFLICT (avito_id) DO UPDATE SET
-                                price = EXCLUDED.price,
-                                published_at = EXCLUDED.published_at
-                        """), row_data)
-                        success += 1
-                    except Exception as e:
-                        skipped += 1
+            await session.commit()
 
-                await session.commit()
+            if chunk_start % 10000 == 0:
+                pct = int(chunk_start / total_rows * 100)
+                logger.info(f"Прогресс: {pct}% ({chunk_start:,}/{total_rows:,})".replace(",", " "))
 
-            total += len(chunk)
-            if chunk_num % 10 == 0:
-                logger.info(f"Прогресс: {total} строк обработано, {success} загружено")
+    logger.info(f"✅ Импорт завершён: {success:,} загружено, {skipped:,} пропущено".replace(",", " "))
 
-    logger.info(f"✅ Импорт завершён!")
-    logger.info(f"   Всего строк: {total}")
-    logger.info(f"   Загружено: {success}")
-    logger.info(f"   Пропущено: {skipped}")
-
-    # Считаем статистику
+    # Статистика рынка
     logger.info("Считаем статистику рынка...")
-    await compute_market_stats(engine)
+    async with AsyncSessionLocal() as session:
+        await session.execute(text("TRUNCATE market_stats"))
+        await session.execute(text("""
+            INSERT INTO market_stats (brand, model, year, city, avg_price, min_price, max_price, count)
+            SELECT brand, model, year, city,
+                   AVG(price)::INTEGER, MIN(price), MAX(price), COUNT(*)
+            FROM catalog
+            WHERE brand IS NOT NULL AND year IS NOT NULL
+              AND price > 50000 AND price < 50000000
+            GROUP BY brand, model, year, city
+            HAVING COUNT(*) >= 2
+        """))
+        await session.commit()
 
     # Финальная статистика
     async with AsyncSessionLocal() as session:
         result = await session.execute(text("""
-            SELECT
-                COUNT(*) as total,
-                COUNT(DISTINCT brand) as brands,
-                COUNT(DISTINCT city) as cities,
-                AVG(price)::INTEGER as avg_price,
-                MIN(price) as min_price,
-                MAX(price) as max_price,
-                COUNT(CASE WHEN seller_type = 'private' THEN 1 END) as private_count,
-                COUNT(CASE WHEN is_urgent THEN 1 END) as urgent_count
+            SELECT COUNT(*), COUNT(DISTINCT brand), COUNT(DISTINCT city),
+                   AVG(price)::INTEGER, MIN(price), MAX(price),
+                   COUNT(CASE WHEN seller_type='private' THEN 1 END),
+                   COUNT(CASE WHEN is_urgent THEN 1 END)
             FROM catalog
         """))
         s = result.fetchone()
@@ -378,89 +392,39 @@ async def import_file(filepath: str):
 ╔══════════════════════════════════════╗
 ║      📊 КАТАЛОГ ЗАГРУЖЕН             ║
 ╠══════════════════════════════════════╣
-║ Объявлений:    {s[0]:>10,}           ║
-║ Марок:         {s[1]:>10,}           ║
-║ Городов:       {s[2]:>10,}           ║
-║ Средняя цена:  {s[3]:>10,}₽          ║
-║ Мин цена:      {s[4]:>10,}₽          ║
-║ Макс цена:     {s[5]:>10,}₽          ║
-║ Частников:     {s[6]:>10,}           ║
-║ Срочных:       {s[7]:>10,}           ║
+║ Объявлений:  {s[0]:>12,}             ║
+║ Марок:       {s[1]:>12,}             ║
+║ Городов:     {s[2]:>12,}             ║
+║ Средняя цена:{s[3]:>10,}₽            ║
+║ Мин цена:    {s[4]:>10,}₽            ║
+║ Макс цена:   {s[5]:>10,}₽            ║
+║ Частников:   {s[6]:>12,}             ║
+║ Срочных:     {s[7]:>12,}             ║
 ╚══════════════════════════════════════╝
         """.replace(",", " "))
 
-    await engine.dispose()
-
-
-async def download_from_gdrive(file_id: str, output_path: str):
-    """Скачивание большого файла с Google Drive с подтверждением"""
-    import httpx
-    logger.info("Скачиваем файл с Google Drive...")
-
-    async with httpx.AsyncClient(timeout=600, follow_redirects=True) as client:
-        # Первый запрос — получаем confirm token
-        url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        resp = await client.get(url)
-        
-        # Ищем confirm token в ответе
-        confirm = None
-        if b"confirm=" in resp.content:
-            import re
-            match = re.search(rb'confirm=([0-9A-Za-z_\-]+)', resp.content)
-            if match:
-                confirm = match.group(1).decode()
-        
-        # Второй запрос с confirm token
-        if confirm:
-            url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm={confirm}"
-            resp = await client.get(url)
-        
-        if resp.status_code != 200:
-            raise Exception(f"Ошибка: {resp.status_code}")
-        
-        with open(output_path, 'wb') as f:
-            f.write(resp.content)
-        
-        size_mb = len(resp.content) // (1024*1024)
-        logger.info(f"✅ Файл скачан: {size_mb} MB")(url: str, output_path: str):
-    """Скачивание файла с Google Drive"""
-    import httpx
-    logger.info(f"Скачиваем файл с Google Drive...")
-    logger.info("Файл большой (~700MB), это займёт несколько минут...")
-
-    async with httpx.AsyncClient(timeout=600, follow_redirects=True) as client:
-        async with client.stream("GET", url) as resp:
-            if resp.status_code != 200:
-                raise Exception(f"Ошибка скачивания: {resp.status_code}")
-
-            total_size = 0
-            with open(output_path, 'wb') as f:
-                async for chunk in resp.aiter_bytes(chunk_size=1024*1024):
-                    f.write(chunk)
-                    total_size += len(chunk)
-                    if total_size % (50*1024*1024) == 0:
-                        logger.info(f"Скачано: {total_size // (1024*1024)} MB")
-
-    logger.info(f"✅ Файл скачан: {total_size // (1024*1024)} MB")
-    return output_path
-
 
 async def main():
-    # Устанавливаем зависимости
     import subprocess
     logger.info("Устанавливаем зависимости...")
-    subprocess.run(["pip", "install", "openpyxl", "pandas", "httpx", "--break-system-packages", "-q"])
+    subprocess.run([
+        "pip", "install", "openpyxl", "pandas", "httpx",
+        "--break-system-packages", "-q"
+    ])
 
-    filepath = "/tmp/catalog.xlsx"
+    from sqlalchemy.ext.asyncio import create_async_engine
+    engine = create_async_engine(DATABASE_URL, echo=False, pool_size=5)
+    await create_tables(engine)
 
-    # Скачиваем файл
-    if not os.path.exists(filepath):
-        await download_from_gdrive(GDRIVE_URL, filepath)
+    if not os.path.exists(LOCAL_PATH) or os.path.getsize(LOCAL_PATH) < 10*1024*1024:
+        await download_from_gdrive(FILE_ID, LOCAL_PATH)
     else:
-        logger.info(f"Файл уже скачан: {filepath}")
+        size_mb = os.path.getsize(LOCAL_PATH) // (1024*1024)
+        logger.info(f"Файл уже скачан: {size_mb} MB")
 
-    # Импортируем
-    await import_file(filepath)
+    await import_file(LOCAL_PATH, engine)
+    await engine.dispose()
+    logger.info("🎉 Готово! Возврати Start Command на: python main.py")
 
 
 if __name__ == "__main__":
