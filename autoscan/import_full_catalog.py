@@ -10,7 +10,7 @@ from datetime import datetime
 from loguru import logger
 
 FILE_ID = "1IAhvdr6qMX15n4L1UDBlcBPN20k2-FD_"
-LOCAL_PATH = "/tmp/catalog.xlsx"
+LOCAL_PATH = "/app/autoscan/190105.xlsx"
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 if DATABASE_URL.startswith("postgres://"):
