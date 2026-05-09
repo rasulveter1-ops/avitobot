@@ -416,9 +416,11 @@ async def main():
     engine = create_async_engine(DATABASE_URL, echo=False, pool_size=5)
     await create_tables(engine)
 
-    if not os.path.exists(LOCAL_PATH) or os.path.getsize(LOCAL_PATH) < 10*1024*1024:
-        # Файл уже на сервере через Git LFS
-    if not os.path.exists(LOCAL_PATH):
+   if not os.path.exists(LOCAL_PATH) or os.path.getsize(LOCAL_PATH) < 10*1024*1024:
+    print("Файл каталога отсутствует или слишком маленький")
+
+if not os.path.exists(LOCAL_PATH):
+    raise FileNotFoundError(f"Не найден файл: {LOCAL_PATH}")
         raise Exception(f"Файл не найден: {LOCAL_PATH}")
     size_mb = os.path.getsize(LOCAL_PATH) // (1024*1024)
     logger.info(f"Файл найден: {size_mb} MB")
