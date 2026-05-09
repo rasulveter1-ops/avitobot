@@ -71,6 +71,21 @@ def score_listing(listing_data: dict, market_price: int) -> dict:
     has_dealer = listing_data.get("has_dealer_keywords", False)
     photos = listing_data.get("photos", [])
     title = listing_data.get("title", "")
+    price_percentile = listing_data.get("price_percentile")
+    deal_label = listing_data.get("deal_label")
+    market_analogs_count = listing_data.get("market_analogs_count")
+
+    # Price percentile: насколько авто дешевле рынка
+    if price_percentile is not None:
+        if price_percentile >= 90:
+            score += 3.0
+            opportunities.append(f"🔥 Дешевле {price_percentile:.0f}% рынка")
+        elif price_percentile >= 75:
+            score += 2.0
+            opportunities.append(f"✅ Дешевле {price_percentile:.0f}% рынка")
+        elif price_percentile <= 20:
+            score -= 2.0
+            risks.append(f"⚠️ Дороже большинства аналогов: дешевле только {price_percentile:.0f}% рынка")
 
     # Сравнение с рыночной ценой
     price_diff_pct = 0
@@ -173,6 +188,9 @@ def score_listing(listing_data: dict, market_price: int) -> dict:
         "price_analysis": {
             "is_below_market": price_diff_pct < 0,
             "diff_percent": round(price_diff_pct, 1),
+            "price_percentile": price_percentile,
+            "deal_label": deal_label,
+            "market_analogs_count": market_analogs_count,
             "comment": f"Рыночная цена ~{market_price:,}₽".replace(",", " ")
         },
         "urgency": {
