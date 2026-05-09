@@ -105,8 +105,21 @@ class Listing(Base):
     # AI анализ
     score = Column(Float, nullable=True)           # общий скоринг 1-10
     ai_analysis = Column(JSON, nullable=True)      # полный анализ от Claude
-    market_price = Column(Integer, nullable=True)  # рыночная цена аналогов
-    price_diff_pct = Column(Float, nullable=True)  # % отклонения от рынка
+    market_price = Column(Integer, nullable=True)  # рыночная цена аналогов, оставлено для совместимости
+    price_diff_pct = Column(Float, nullable=True)  # % отклонения от медианы рынка
+
+    # Рыночная полка и price percentile
+    market_min_price = Column(Integer, nullable=True)
+    market_avg_price = Column(Integer, nullable=True)
+    market_median_price = Column(Integer, nullable=True)
+    market_max_price = Column(Integer, nullable=True)
+    market_p10_price = Column(Integer, nullable=True)
+    market_p25_price = Column(Integer, nullable=True)
+    market_p75_price = Column(Integer, nullable=True)
+    market_p90_price = Column(Integer, nullable=True)
+    market_analogs_count = Column(Integer, nullable=True)
+    price_percentile = Column(Float, nullable=True)  # например 91 = дешевле 91% рынка
+    deal_label = Column(String(30), nullable=True)  # SUPER_DEAL / GOOD_DEAL / MARKET_PRICE / ...
 
     # Детекторы
     is_urgent = Column(Boolean, default=False)
@@ -183,10 +196,16 @@ class MarketStats(Base):
     model = Column(String(100), nullable=False)
     year = Column(Integer, nullable=False)
     region = Column(String(200), nullable=True)
+    city = Column(String(100), nullable=True)
 
     avg_price = Column(Integer, nullable=False)
     min_price = Column(Integer, nullable=True)
     max_price = Column(Integer, nullable=True)
+    median_price = Column(Integer, nullable=True)
+    p10_price = Column(Integer, nullable=True)
+    p25_price = Column(Integer, nullable=True)
+    p75_price = Column(Integer, nullable=True)
+    p90_price = Column(Integer, nullable=True)
     listings_count = Column(Integer, default=0)
     avg_days_on_market = Column(Float, nullable=True)
 
