@@ -4,7 +4,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from loguru import logger
 
 from parser.avito_parser import AvitoParser
-from analyzer.ai_analyzer import analyze_listing, get_market_price
+from analyzer.ai_analyzer import analyze_listing
+from analyzer.market_engine import get_best_market_snapshot
 from database.connection import AsyncSessionLocal
 from database.models import Listing, PriceHistory, User, UserFilter
 from sqlalchemy import select, and_
@@ -148,21 +149,21 @@ async def _process_listing(listing_data: dict) -> bool:
 
         brand = listing_data.get("brand")
         model = listing_data.get("model")
-
-        market_price = 0
-        if brand and listing_data.get("year") and listing_data.get("mileage"):
-            market_price = await get_market_price(
-                brand=brand,
-                model=model or "",
-                year=listing_data["year"],
-                mileage=listing_data["mileage"],
-                region=listing_data.get("location", "Россия")
-            )
-
         price = listing_data.get("price", 0)
-        price_diff_pct = None
-        if market_price and price:
-            price_diff_pct = ((price - market_price) / market_price) * 100
+
+        market_snapshot = await get_best_market_snapshot(
+            session,
+            brand=brand,
+            model=model,
+            year=listing_data.get("year"),
+            price=price,
+            city=listing_data.get("city"),
+            region=listing_data.get("location") or listing_data.get("region"),
+            mileage=listing_data.get("mileage"),
+            exclude_avito_id=avito_id,
+        )
+        market_price = market_snapshot.median_price or market_snapshot.avg_price or 0
+        price_diff_pct = market_snapshot.price_diff_pct
 
         seller_listings_count = listing_data.get("seller_listings_count", 1)
         is_reseller = (
@@ -203,6 +204,17 @@ async def _process_listing(listing_data: dict) -> bool:
             seller_listings_count=seller_listings_count,
             market_price=market_price if market_price else None,
             price_diff_pct=price_diff_pct,
+            market_min_price=market_snapshot.min_price,
+            market_avg_price=market_snapshot.avg_price,
+            market_median_price=market_snapshot.median_price,
+            market_max_price=market_snapshot.max_price,
+            market_p10_price=market_snapshot.p10_price,
+            market_p25_price=market_snapshot.p25_price,
+            market_p75_price=market_snapshot.p75_price,
+            market_p90_price=market_snapshot.p90_price,
+            market_analogs_count=market_snapshot.analogs_count,
+            price_percentile=market_snapshot.price_percentile,
+            deal_label=market_snapshot.deal_label,
             is_urgent=listing_data.get("is_urgent", False),
             urgent_keywords=listing_data.get("urgent_keywords", []),
             is_reseller=is_reseller,
@@ -217,6 +229,9 @@ async def _process_listing(listing_data: dict) -> bool:
         listing_id = new_listing.id
 
     if not is_duplicate:
+        listing_data["price_percentile"] = market_snapshot.price_percentile
+        listing_data["deal_label"] = market_snapshot.deal_label
+        listing_data["market_analogs_count"] = market_snapshot.analogs_count
         await _analyze_and_update(listing_id, listing_data, market_price)
 
     return True
@@ -273,6 +288,7 @@ async def _check_and_send_alerts(filters_and_users: list):
                 if user_filter.year_max:
                     query = query.where(Listing.year <= user_filter.year_max)
 
+                query = query.order_by(Listing.price_percentile.desc().nullslast(), Listing.score.desc())
                 result = await session.execute(query)
                 matching_listings = result.scalars().all()
 
