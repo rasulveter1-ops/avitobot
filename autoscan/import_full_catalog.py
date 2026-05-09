@@ -406,32 +406,51 @@ async def import_file(filepath: str, engine):
 
 async def main():
     import subprocess
+
     logger.info("Устанавливаем зависимости...")
+
     subprocess.run([
-        "pip", "install", "openpyxl", "pandas", "httpx",
-        "--break-system-packages", "-q"
+        "pip",
+        "install",
+        "openpyxl",
+        "pandas",
+        "httpx",
+        "--break-system-packages",
+        "-q"
     ])
 
     from sqlalchemy.ext.asyncio import create_async_engine
-    engine = create_async_engine(DATABASE_URL, echo=False, pool_size=5)
+
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_size=5
+    )
+
     await create_tables(engine)
 
-  # Проверка файла каталога
-if not os.path.exists(LOCAL_PATH):
-    raise FileNotFoundError(f"Не найден файл: {LOCAL_PATH}")
+    # Проверка файла каталога
+    if not os.path.exists(LOCAL_PATH):
+        raise FileNotFoundError(
+            f"Не найден файл: {LOCAL_PATH}"
+        )
 
-if os.path.getsize(LOCAL_PATH) < 10 * 1024 * 1024:
-    print("Предупреждение: файл каталога слишком маленький")
-        raise Exception(f"Файл не найден: {LOCAL_PATH}")
-    size_mb = os.path.getsize(LOCAL_PATH) // (1024*1024)
+    size_mb = os.path.getsize(LOCAL_PATH) // (1024 * 1024)
+
+    if size_mb < 10:
+        logger.warning(
+            "⚠️ Предупреждение: файл каталога слишком маленький"
+        )
+
     logger.info(f"Файл найден: {size_mb} MB")
-    else:
-        size_mb = os.path.getsize(LOCAL_PATH) // (1024*1024)
-        logger.info(f"Файл уже скачан: {size_mb} MB")
 
+    # Импорт каталога
     await import_file(LOCAL_PATH, engine)
+
+    # Закрываем соединение
     await engine.dispose()
-    logger.info("🎉 Готово! Возврати Start Command на: python main.py")
+
+    logger.info("🎉 Импорт завершён успешно!")
 
 
 if __name__ == "__main__":
