@@ -424,3 +424,55 @@ async def import_file(filepath: str, engine):
         )
 
     logger.info(f"Файл найден: {size_mb} MB")
+async def main():
+    print("🚀 MAIN STARTED", flush=True)
+
+    import subprocess
+
+    logger.info("Устанавливаем зависимости...")
+
+    subprocess.run([
+        "pip",
+        "install",
+        "openpyxl",
+        "pandas",
+        "httpx",
+        "--break-system-packages",
+        "-q"
+    ])
+
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_size=5
+    )
+
+    await create_tables(engine)
+
+    os.makedirs("/app/autoscan", exist_ok=True)
+
+    if not os.path.exists(LOCAL_PATH):
+        logger.warning("Файл не найден локально. Скачиваем с Google Drive...")
+        await download_from_gdrive(FILE_ID, LOCAL_PATH)
+
+    size_mb = os.path.getsize(LOCAL_PATH) // (1024 * 1024)
+
+    if size_mb < 10:
+        raise Exception(
+            f"Файл слишком маленький: {size_mb} MB. Возможно, скачалась HTML-страница, а не Excel."
+        )
+
+    logger.info(f"Файл найден: {size_mb} MB")
+
+    await import_file(LOCAL_PATH, engine)
+
+    await engine.dispose()
+
+    logger.info("🎉 Импорт завершён успешно!")
+
+
+if __name__ == "__main__":
+    print("🔥 IMPORT_FULL_CATALOG STARTED", flush=True)
+    asyncio.run(main())
