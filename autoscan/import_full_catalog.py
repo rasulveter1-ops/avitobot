@@ -10,6 +10,7 @@ from datetime import datetime
 from loguru import logger
 
 FILE_ID = "1IAhvdr6qMX15n4L1UDBlcBPN20k2-FD_"
+DIRECT_DOWNLOAD_URL = "https://drive.usercontent.google.com/download?id=1IAhvdr6qMX15n4L1UDBlcBPN20k2-FD_&export=download&confirm=t"
 LOCAL_PATH = "/app/autoscan/190105.xlsx"
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
@@ -250,62 +251,54 @@ async def create_tables(engine):
 
 async def download_from_gdrive(file_id: str, output_path: str):
     import httpx
-    logger.info("Скачиваем файл с Google Drive...")
 
-    session_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    logger.info("Скачиваем файл напрямую с Google Drive...")
+
+    url = DIRECT_DOWNLOAD_URL
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Если после прошлой неудачной попытки остался битый файл — удаляем
+    if os.path.exists(output_path):
+        current_size_mb = os.path.getsize(output_path) // (1024 * 1024)
+        if current_size_mb < 100:
+            logger.warning(f"Удаляем битый файл: {current_size_mb} MB")
+            os.remove(output_path)
+
+    total_size = 0
 
     async with httpx.AsyncClient(
-        timeout=httpx.Timeout(600.0, connect=30.0),
+        timeout=httpx.Timeout(3600.0, connect=60.0),
         follow_redirects=True
     ) as client:
-        # Первый запрос
-        resp = await client.get(session_url)
-        logger.info(f"Первый запрос: статус {resp.status_code}, размер {len(resp.content)} байт")
 
-        # Ищем confirm token
-        confirm = None
-        content_str = resp.content.decode('utf-8', errors='ignore')
+        async with client.stream("GET", url) as response:
+            logger.info(f"Статус скачивания: {response.status_code}")
 
-        patterns = [
-            r'confirm=([0-9A-Za-z_\-]+)',
-            r'"confirm","([^"]+)"',
-            r'name="confirm"\s+value="([^"]+)"',
-        ]
-        for pattern in patterns:
-            match = re.search(pattern, content_str)
-            if match:
-                confirm = match.group(1)
-                logger.info(f"Найден confirm token: {confirm}")
-                break
+            if response.status_code != 200:
+                raise Exception(f"Ошибка скачивания: {response.status_code}")
 
-        if confirm:
-            download_url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm={confirm}"
-        else:
-            # Пробуем альтернативный URL
-            download_url = f"https://drive.usercontent.google.com/download?id={file_id}&export=download&confirm=t"
-            logger.info("Confirm не найден, пробуем usercontent URL")
+            content_type = response.headers.get("content-type", "")
+            logger.info(f"Content-Type: {content_type}")
 
-        # Скачиваем файл
-        logger.info(f"Скачиваем: {download_url[:80]}...")
-        total_size = 0
+            with open(output_path, "wb") as f:
+                async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
+                    if not chunk:
+                        continue
 
-        async with client.stream("GET", download_url) as stream_resp:
-            logger.info(f"Статус скачивания: {stream_resp.status_code}")
-            if stream_resp.status_code not in [200, 206]:
-                raise Exception(f"Ошибка скачивания: {stream_resp.status_code}")
-
-            with open(output_path, 'wb') as f:
-                async for chunk in stream_resp.aiter_bytes(chunk_size=1024*1024):
                     f.write(chunk)
                     total_size += len(chunk)
-                    if total_size % (100*1024*1024) == 0:
-                        logger.info(f"Скачано: {total_size // (1024*1024)} MB")
 
-    size_mb = total_size // (1024*1024)
+                    if total_size and total_size % (100 * 1024 * 1024) < 1024 * 1024:
+                        logger.info(f"Скачано: {total_size // (1024 * 1024)} MB")
+
+    size_mb = os.path.getsize(output_path) // (1024 * 1024)
     logger.info(f"✅ Файл скачан: {size_mb} MB")
 
-    if size_mb < 10:
-        raise Exception(f"Файл слишком маленький ({size_mb} MB) — возможно скачалась HTML страница")
+    if size_mb < 100:
+        raise Exception(
+            f"Файл слишком маленький ({size_mb} MB). Скорее всего Google Drive отдал HTML-страницу, а не Excel."
+        )
 
 
 async def import_file(filepath: str, engine):
@@ -404,26 +397,6 @@ async def import_file(filepath: str, engine):
         """.replace(",", " "))
 
 
-    # Создаем папку для файла
-    os.makedirs("/app/autoscan", exist_ok=True)
-
-    # Если файла нет в контейнере — скачиваем с Google Drive
-    if not os.path.exists(LOCAL_PATH):
-        logger.warning("Файл не найден локально. Скачиваем с Google Drive...")
-
-        await download_from_gdrive(
-            FILE_ID,
-            LOCAL_PATH
-        )
-
-    size_mb = os.path.getsize(LOCAL_PATH) // (1024 * 1024)
-
-    if size_mb < 10:
-        raise Exception(
-            f"Файл слишком маленький: {size_mb} MB. Возможно, скачалась HTML-страница, а не Excel."
-        )
-
-    logger.info(f"Файл найден: {size_mb} MB")
 async def main():
     print("🚀 MAIN STARTED", flush=True)
 
@@ -439,9 +412,12 @@ async def main():
         "httpx",
         "--break-system-packages",
         "-q"
-    ])
+    ], check=False)
 
     from sqlalchemy.ext.asyncio import create_async_engine
+
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL пустой. Проверь переменные Railway.")
 
     engine = create_async_engine(
         DATABASE_URL,
@@ -449,28 +425,36 @@ async def main():
         pool_size=5
     )
 
-    await create_tables(engine)
+    try:
+        await create_tables(engine)
 
-    os.makedirs("/app/autoscan", exist_ok=True)
+        os.makedirs("/app/autoscan", exist_ok=True)
 
-    if not os.path.exists(LOCAL_PATH):
-        logger.warning("Файл не найден локально. Скачиваем с Google Drive...")
-        await download_from_gdrive(FILE_ID, LOCAL_PATH)
+        if not os.path.exists(LOCAL_PATH):
+            logger.warning("Файл не найден локально. Скачиваем с Google Drive...")
+            await download_from_gdrive(FILE_ID, LOCAL_PATH)
 
-    size_mb = os.path.getsize(LOCAL_PATH) // (1024 * 1024)
+        size_mb = os.path.getsize(LOCAL_PATH) // (1024 * 1024)
 
-    if size_mb < 10:
-        raise Exception(
-            f"Файл слишком маленький: {size_mb} MB. Возможно, скачалась HTML-страница, а не Excel."
-        )
+        if size_mb < 100:
+            logger.warning("Локальный файл слишком маленький. Удаляем и скачиваем заново...")
+            os.remove(LOCAL_PATH)
+            await download_from_gdrive(FILE_ID, LOCAL_PATH)
+            size_mb = os.path.getsize(LOCAL_PATH) // (1024 * 1024)
 
-    logger.info(f"Файл найден: {size_mb} MB")
+        if size_mb < 100:
+            raise Exception(
+                f"Файл слишком маленький: {size_mb} MB. Возможно, скачалась HTML-страница, а не Excel."
+            )
 
-    await import_file(LOCAL_PATH, engine)
+        logger.info(f"Файл найден: {size_mb} MB")
 
-    await engine.dispose()
+        await import_file(LOCAL_PATH, engine)
 
-    logger.info("🎉 Импорт завершён успешно!")
+        logger.info("🎉 Импорт завершён успешно!")
+
+    finally:
+        await engine.dispose()
 
 
 if __name__ == "__main__":
