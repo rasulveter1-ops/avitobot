@@ -6,175 +6,340 @@
   <title>AutoScan AI</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       min-height: 100vh;
       font-family: Arial, sans-serif;
-      color: #fff;
+      background: #f6f8fb;
+      color: #0f172a;
       padding: 18px;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(37, 99, 235, .45), transparent 35%),
-        radial-gradient(circle at 90% 20%, rgba(220, 38, 38, .35), transparent 32%),
-        radial-gradient(circle at 50% 100%, rgba(34, 197, 94, .22), transparent 35%),
-        #020617;
+    }
+
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .menu, .bell {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: none;
+      background: #ffffff;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, .08);
+      font-size: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 19px;
+    }
+
+    .brand span {
+      color: #0f9f58;
     }
 
     .hero {
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, rgba(15, 23, 42, .92), rgba(2, 6, 23, .96));
-      border: 1px solid rgba(148, 163, 184, .18);
+      background: linear-gradient(135deg, #ffffff, #f8fafc);
       border-radius: 28px;
-      padding: 24px;
-      box-shadow: 0 24px 70px rgba(0,0,0,.45);
+      padding: 26px;
       margin-bottom: 18px;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, .08);
+      border: 1px solid rgba(15, 23, 42, .04);
     }
 
-    .hero::after {
-      content: "";
-      position: absolute;
-      width: 180px;
-      height: 180px;
-      right: -60px;
-      top: -60px;
-      background: radial-gradient(circle, rgba(56, 189, 248, .35), transparent 65%);
-    }
-
-    .badge {
-      display: inline-flex;
-      padding: 7px 11px;
-      border-radius: 999px;
-      background: rgba(37, 99, 235, .16);
-      border: 1px solid rgba(96, 165, 250, .35);
-      color: #bfdbfe;
-      font-size: 12px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-
-    h1 {
+    .hero h1 {
       margin: 0;
-      font-size: 30px;
-      line-height: 1.1;
-      letter-spacing: -.5px;
+      font-size: 34px;
+      line-height: 1.08;
+      letter-spacing: -.7px;
     }
 
-    h2 {
-      margin: 0 0 10px;
-      font-size: 20px;
+    .hero h1 span {
+      color: #0f9f58;
+      display: block;
     }
 
     .subtitle {
-      color: #cbd5e1;
-      margin-top: 10px;
-      line-height: 1.5;
-      font-size: 15px;
+      margin-top: 16px;
+      color: #64748b;
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 70%;
+    }
+
+    .car {
+      position: absolute;
+      right: -20px;
+      top: 72px;
+      width: 210px;
+      height: 105px;
+      border-radius: 24px;
+      background:
+        linear-gradient(145deg, #ffffff, #dbe4ef);
+      box-shadow:
+        inset 0 -12px 22px rgba(15, 23, 42, .10),
+        0 18px 45px rgba(15, 23, 42, .12);
+      opacity: .95;
+    }
+
+    .car::before {
+      content: "";
+      position: absolute;
+      left: 38px;
+      top: -28px;
+      width: 95px;
+      height: 46px;
+      border-radius: 48px 48px 6px 6px;
+      background: linear-gradient(145deg, #ffffff, #cbd5e1);
+      box-shadow: inset 0 -8px 16px rgba(15, 23, 42, .08);
+    }
+
+    .car::after {
+      content: "";
+      position: absolute;
+      left: 34px;
+      bottom: -15px;
+      width: 152px;
+      height: 30px;
+      background:
+        radial-gradient(circle at 20px 15px, #0f172a 0 13px, transparent 14px),
+        radial-gradient(circle at 132px 15px, #0f172a 0 13px, transparent 14px);
     }
 
     .stats {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 20px 12px;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin: 18px 0;
+      gap: 0;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .08);
+      margin-bottom: 18px;
     }
 
     .stat {
-      background: rgba(15, 23, 42, .72);
-      border: 1px solid rgba(148, 163, 184, .16);
-      backdrop-filter: blur(14px);
-      border-radius: 20px;
-      padding: 14px 10px;
       text-align: center;
-      box-shadow: 0 14px 35px rgba(0,0,0,.28);
+      border-right: 1px solid #e5e7eb;
+    }
+
+    .stat:last-child {
+      border-right: none;
     }
 
     .num {
-      font-size: 24px;
+      color: #0f9f58;
       font-weight: 900;
+      font-size: 28px;
     }
 
     .label {
-      color: #94a3b8;
-      font-size: 12px;
-      margin-top: 5px;
+      color: #64748b;
+      font-size: 13px;
+      margin-top: 6px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
+    .spark {
+      margin: 10px auto 0;
+      width: 58px;
+      height: 16px;
+      border-bottom: 2px solid #16a34a;
+      border-radius: 50%;
+      opacity: .7;
     }
 
-    .btn {
-      border: 0;
-      border-radius: 24px;
-      padding: 20px 15px;
-      color: white;
-      font-size: 17px;
-      font-weight: 900;
-      text-align: left;
-      min-height: 96px;
-      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    .list {
+      background: #ffffff;
+      border-radius: 26px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, .08);
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      border-bottom: 1px solid #eef2f7;
       cursor: pointer;
-      transition: transform .15s ease, filter .15s ease;
     }
 
-    .btn:active {
-      transform: scale(.97);
-      filter: brightness(1.12);
+    .item:last-child {
+      border-bottom: none;
     }
 
-    .blue { background: linear-gradient(135deg, #2563eb, #06b6d4); }
-    .red { background: linear-gradient(135deg, #dc2626, #f97316); }
-    .green { background: linear-gradient(135deg, #16a34a, #22c55e); }
-    .purple { background: linear-gradient(135deg, #7c3aed, #db2777); }
-    .dark { background: linear-gradient(135deg, #334155, #020617); }
+    .icon {
+      min-width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 900;
+    }
 
-    .wide {
-      grid-column: span 2;
+    .i-green { background: #e8f8ef; color: #0f9f58; }
+    .i-red { background: #fff1f2; color: #ef4444; }
+    .i-purple { background: #f3e8ff; color: #7c3aed; }
+    .i-yellow { background: #fff7dd; color: #eab308; }
+
+    .item-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+
+    .item-sub {
+      color: #64748b;
+      font-size: 15px;
+    }
+
+    .arrow {
+      margin-left: auto;
+      color: #64748b;
+      font-size: 26px;
+    }
+
+    .ai-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(135deg, #ecfdf5, #ffffff);
+      border: 1px solid #d1fae5;
+      border-radius: 26px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .06);
+    }
+
+    .ai-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #047857, #22c55e);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .ai-title {
+      font-weight: 900;
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .ai-sub {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .bottom {
+      position: sticky;
+      bottom: 0;
+      background: #ffffff;
+      border-radius: 26px;
+      box-shadow: 0 -10px 35px rgba(15, 23, 42, .08);
+      padding: 12px 8px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+    }
+
+    .tab {
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .tab div {
+      font-size: 24px;
+      margin-bottom: 3px;
+    }
+
+    .active {
+      color: #0f9f58;
+      font-weight: 800;
+    }
+
+    .screen {
+      display: none;
     }
 
     .form {
       display: grid;
       gap: 12px;
+      margin-top: 16px;
     }
 
     input {
       width: 100%;
-      border: 1px solid rgba(148, 163, 184, .22);
-      background: rgba(15, 23, 42, .72);
-      color: white;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      color: #0f172a;
       padding: 16px;
       border-radius: 18px;
       font-size: 16px;
       outline: none;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+      box-shadow: 0 10px 25px rgba(15, 23, 42, .04);
     }
 
-    input::placeholder {
-      color: #64748b;
+    .primary {
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      background: linear-gradient(135deg, #0f9f58, #22c55e);
+      color: white;
+      font-size: 17px;
+      font-weight: 900;
+      box-shadow: 0 15px 35px rgba(34, 197, 94, .25);
+    }
+
+    .secondary {
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      background: #e5e7eb;
+      color: #0f172a;
+      font-size: 17px;
+      font-weight: 900;
     }
 
     .result-card {
-      background: rgba(15, 23, 42, .84);
-      border: 1px solid rgba(148, 163, 184, .16);
+      background: #ffffff;
       border-radius: 24px;
       padding: 18px;
       margin-top: 14px;
-      box-shadow: 0 20px 55px rgba(0,0,0,.38);
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .08);
     }
 
     .score {
       display: inline-block;
       padding: 7px 11px;
-      background: linear-gradient(135deg, #16a34a, #22c55e);
+      background: #dcfce7;
+      color: #15803d;
       border-radius: 999px;
       font-weight: 900;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-size: 13px;
     }
 
@@ -185,58 +350,20 @@
     }
 
     .muted {
-      color: #94a3b8;
+      color: #64748b;
       line-height: 1.45;
     }
 
-    .mini-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .mini {
-      background: rgba(30, 41, 59, .78);
-      border-radius: 16px;
-      padding: 12px;
-      color: #cbd5e1;
-      font-size: 14px;
+    @media (max-width: 420px) {
+      .hero h1 { font-size: 30px; }
+      .subtitle { max-width: 100%; }
+      .car { opacity: .22; right: -55px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="hero">
-    <div class="badge">AI DEAL SCOUT</div>
-    <h1>🚗 AutoScan AI</h1>
-    <div class="subtitle">
-      Умный помощник для поиска выгодных авто: рынок, сигналы, фильтры и сделки в одном Telegram-приложении.
-    </div>
-  </div>
-
-  <div class="stats">
-    <div class="stat">
-      <div class="num">0</div>
-      <div class="label">сигналов</div>
-    </div>
-    <div class="stat">
-      <div class="num">0</div>
-      <div class="label">ниже рынка</div>
-    </div>
-    <div class="stat">
-      <div class="num">0</div>
-      <div class="label">фильтров</div>
-    </div>
-  </div>
-
-  <div class="grid">
-    <button class="btn blue">🔥 Найти авто<br><span class="muted">по выгодности</span></button>
-    <button class="btn red">🚨 Сигналы<br><span class="muted">новые сделки</span></button>
-    <button class="btn green">🎯 Фильтры<br><span class="muted">мониторинг</span></button>
-    <button class="btn purple">📈 Рынок<br><span class="muted">аналитика цен</span></button>
-    <button class="btn dark wide">⭐ Избранное<br><span class="muted">сохранённые авто</span></button>
-  </div>
+  <div class="app" id="app"></div>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -244,21 +371,153 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    function goBack() {
-      location.reload();
+    const app = document.getElementById("app");
+
+    function home() {
+      app.innerHTML = `
+        <div class="topbar">
+          <button class="menu">☰</button>
+          <div class="brand">🚗 AUTO<span>SCAN</span> AI</div>
+          <button class="bell">🔔</button>
+        </div>
+
+        <div class="hero">
+          <h1>Умный поиск <span>выгодных авто</span></h1>
+          <div class="subtitle">
+            Ищем лучшие предложения на рынке и находим сделки быстрее всех.
+          </div>
+          <div class="car"></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="num">12</div>
+            <div class="label">сигналов</div>
+            <div class="spark"></div>
+          </div>
+          <div class="stat">
+            <div class="num">8</div>
+            <div class="label">ниже рынка</div>
+            <div class="spark"></div>
+          </div>
+          <div class="stat">
+            <div class="num">5</div>
+            <div class="label">фильтров</div>
+            <div class="spark"></div>
+          </div>
+        </div>
+
+        <div class="list">
+          <div class="item" onclick="searchScreen()">
+            <div class="icon i-green">⌕</div>
+            <div>
+              <div class="item-title">Найти авто</div>
+              <div class="item-sub">по выгодности</div>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+
+          <div class="item" onclick="simpleScreen('🚨 Сигналы', 'Здесь будут свежие объявления ниже рынка и новые сделки.')">
+            <div class="icon i-red">♟</div>
+            <div>
+              <div class="item-title">Сигналы</div>
+              <div class="item-sub">новые сделки</div>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+
+          <div class="item" onclick="simpleScreen('🎯 Фильтры', 'Здесь пользователь сможет создавать фильтры и мониторить объявления.')">
+            <div class="icon i-green">◎</div>
+            <div>
+              <div class="item-title">Фильтры</div>
+              <div class="item-sub">мониторинг объявлений</div>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+
+          <div class="item" onclick="simpleScreen('📈 Рынок', 'Здесь будет аналитика цен, средняя цена, минимум, максимум и статистика.')">
+            <div class="icon i-purple">▥</div>
+            <div>
+              <div class="item-title">Рынок</div>
+              <div class="item-sub">аналитика цен и статистика</div>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+
+          <div class="item" onclick="simpleScreen('⭐ Избранное', 'Здесь будут сохранённые автомобили пользователя.')">
+            <div class="icon i-yellow">★</div>
+            <div>
+              <div class="item-title">Избранное</div>
+              <div class="item-sub">сохранённые авто</div>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-icon">AI</div>
+          <div>
+            <div class="ai-title">AutoScan AI</div>
+            <div class="ai-sub">
+              Анализируем рынок, считаем выгоду и находим лучшие варианты для вас.
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom">
+          <div class="tab active" onclick="home()"><div>⌂</div>Главная</div>
+          <div class="tab" onclick="searchScreen()"><div>⌕</div>Поиск</div>
+          <div class="tab" onclick="simpleScreen('⭐ Избранное', 'Здесь будут сохранённые автомобили пользователя.')"><div>☆</div>Избранное</div>
+          <div class="tab" onclick="simpleScreen('📈 Рынок', 'Здесь будет аналитика рынка.')"><div>▥</div>Рынок</div>
+          <div class="tab" onclick="simpleScreen('👤 Профиль', 'Здесь будет профиль и подписка пользователя.')"><div>♙</div>Профиль</div>
+        </div>
+      `;
     }
 
-    function showScreen(title, text) {
-      document.body.innerHTML = `
+    function simpleScreen(title, text) {
+      app.innerHTML = `
+        <div class="topbar">
+          <button class="menu" onclick="home()">‹</button>
+          <div class="brand">🚗 AUTO<span>SCAN</span> AI</div>
+          <button class="bell">🔔</button>
+        </div>
+
         <div class="hero">
-          <div class="badge">AUTOSCAN AI</div>
           <h1>${title}</h1>
           <div class="subtitle">${text}</div>
         </div>
 
-        <div class="grid">
-          <button class="btn dark wide" onclick="goBack()">⬅️ Назад</button>
+        <button class="secondary" onclick="home()">⬅️ Назад</button>
+      `;
+    }
+
+    function searchScreen() {
+      app.innerHTML = `
+        <div class="topbar">
+          <button class="menu" onclick="home()">‹</button>
+          <div class="brand">🚗 AUTO<span>SCAN</span> AI</div>
+          <button class="bell">🔔</button>
         </div>
+
+        <div class="hero">
+          <h1>Найти <span>выгодное авто</span></h1>
+          <div class="subtitle">
+            Введите параметры — AutoScan подберёт лучшие варианты по выгодности.
+          </div>
+        </div>
+
+        <div class="form">
+          <input id="brand" placeholder="Марка: Toyota" />
+          <input id="model" placeholder="Модель: Camry" />
+          <input id="year" placeholder="Год от: 2018" />
+          <input id="city" placeholder="Город: Москва" />
+          <input id="budget" placeholder="Бюджет до: 2000000" />
+
+          <button class="primary" onclick="searchCars()">🔎 Найти выгодные авто</button>
+          <button class="secondary" onclick="home()">⬅️ Назад</button>
+        </div>
+
+        <div id="results"></div>
       `;
     }
 
@@ -275,15 +534,7 @@
           <h2>${brand} ${model} ${year}</h2>
           <div class="price">до ${Number(budget).toLocaleString("ru-RU")} ₽</div>
           <p class="muted">📍 ${city} · 📉 ниже рынка примерно на 14–18%</p>
-
-          <div class="mini-row">
-            <div class="mini">⚡ Потенциал<br><b>+120–180 тыс ₽</b></div>
-            <div class="mini">⏱ Проверка<br><b>срочно</b></div>
-          </div>
-
-          <p class="muted">
-            Данные пока тестовые. После подключения API здесь будут реальные объявления из базы.
-          </p>
+          <p class="muted">⚡ Данные пока тестовые. После подключения API здесь будут реальные объявления.</p>
         </div>
 
         <div class="result-card">
@@ -295,64 +546,7 @@
       `;
     }
 
-    document.querySelectorAll(".btn").forEach((button) => {
-      button.addEventListener("click", () => {
-        const text = button.innerText;
-
-        if (text.includes("Найти авто")) {
-          document.body.innerHTML = `
-            <div class="hero">
-              <div class="badge">SEARCH ENGINE</div>
-              <h1>🔥 Найти авто</h1>
-              <div class="subtitle">
-                Введи параметры — AutoScan найдёт самые интересные варианты.
-              </div>
-            </div>
-
-            <div class="form">
-              <input id="brand" placeholder="Марка: Toyota" />
-              <input id="model" placeholder="Модель: Camry" />
-              <input id="year" placeholder="Год от: 2018" />
-              <input id="city" placeholder="Город: Москва" />
-              <input id="budget" placeholder="Бюджет до: 2000000" />
-
-              <button class="btn blue wide" onclick="searchCars()">🔎 Найти выгодные авто</button>
-              <button class="btn dark wide" onclick="goBack()">⬅️ Назад</button>
-            </div>
-
-            <div id="results"></div>
-          `;
-        }
-
-        if (text.includes("Сигналы")) {
-          showScreen(
-            "🚨 Сигналы",
-            "Здесь будут свежие объявления ниже рынка, срочные продажи и топ-сделки дня."
-          );
-        }
-
-        if (text.includes("Фильтры")) {
-          showScreen(
-            "🎯 Фильтры",
-            "Здесь пользователь сможет создавать фильтры поиска и получать уведомления."
-          );
-        }
-
-        if (text.includes("Рынок")) {
-          showScreen(
-            "📈 Рынок",
-            "Здесь будет аналитика: средняя цена, минимум, максимум и динамика по модели."
-          );
-        }
-
-        if (text.includes("Избранное")) {
-          showScreen(
-            "⭐ Избранное",
-            "Здесь будут сохранённые автомобили пользователя."
-          );
-        }
-      });
-    });
+    home();
   </script>
 </body>
 </html>
