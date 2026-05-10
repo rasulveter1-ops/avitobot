@@ -5,30 +5,16 @@ from scheduler.scheduler import start_scheduler, stop_scheduler
 from database.connection import init_db
 
 
-async def cleanup_old_listings():
-    from database.connection import AsyncSessionLocal
-    from database.models import Listing, PriceHistory
-    from sqlalchemy import delete, select, func
-
-    async with AsyncSessionLocal() as session:
-        count_result = await session.execute(select(func.count(Listing.id)))
-        count = count_result.scalar()
-        if count > 0:
-            await session.execute(delete(PriceHistory))
-            await session.execute(delete(Listing))
-            await session.commit()
-            logger.info(f"🗑 Очищено {count} старых объявлений")
-        else:
-            logger.info("База пуста — готовы к работе")
-
-
 async def main():
     logger.info("🚀 Запуск AutoScan...")
 
     await init_db()
     logger.info("✅ База данных готова")
 
-    await cleanup_old_listings()
+    # ВАЖНО:
+    # Больше не очищаем объявления при старте.
+    # Историческая база и новые объявления должны сохраняться.
+    # Раньше тут был вызов cleanup_old_listings().
 
     await bot.delete_webhook(drop_pending_updates=True)
     await asyncio.sleep(2)
@@ -36,6 +22,7 @@ async def main():
 
     await start_scheduler()
     logger.info("✅ Планировщик запущен")
+
     logger.info("✅ Telegram бот запущен")
 
     try:
