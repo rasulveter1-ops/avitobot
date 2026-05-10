@@ -3,6 +3,7 @@ from loguru import logger
 from bot.main import dp, bot
 from scheduler.scheduler import start_scheduler, stop_scheduler
 from database.connection import init_db
+from webapp.server import start_webapp
 
 
 async def main():
@@ -11,14 +12,12 @@ async def main():
     await init_db()
     logger.info("✅ База данных готова")
 
-    # ВАЖНО:
-    # Больше не очищаем объявления при старте.
-    # Историческая база и новые объявления должны сохраняться.
-    # Раньше тут был вызов cleanup_old_listings().
-
     await bot.delete_webhook(drop_pending_updates=True)
     await asyncio.sleep(2)
     logger.info("✅ Webhook сброшен")
+
+    await start_webapp()
+    logger.info("✅ WebApp запущен")
 
     await start_scheduler()
     logger.info("✅ Планировщик запущен")
