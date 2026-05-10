@@ -40,89 +40,70 @@
     .app {
       max-width: 520px;
       margin: 0 auto;
-      padding-bottom: 18px;
+      padding-bottom: 120px;
     }
 
     .topbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin: 2px 0 22px;
+      justify-content: center;
+      margin: 0 0 22px;
+      height: 52px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 11px;
-      font-size: 20px;
-      font-weight: 950;
-      letter-spacing: .4px;
-    }
-
-    .brand-car {
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      background: #e7f8ef;
-      box-shadow: 0 12px 25px rgba(19, 160, 95, .12);
+      justify-content: center;
+      gap: 12px;
+      font-size: 22px;
+      font-weight: 1000;
+      letter-spacing: .5px;
+      color: #07111f;
     }
 
     .brand span {
       color: var(--green);
     }
 
-    .bell {
-      position: relative;
-      width: 46px;
-      height: 46px;
-      border-radius: 16px;
-      border: 0;
-      background: var(--card);
-      box-shadow: var(--soft-shadow);
+    .brand-car {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: #e7f8ef;
+      box-shadow: 0 12px 25px rgba(19, 160, 95, .14);
       font-size: 22px;
-      cursor: pointer;
-    }
-
-    .bell::after {
-      content: "";
-      position: absolute;
-      right: 10px;
-      top: 9px;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--green);
-      border: 2px solid #fff;
     }
 
     .hero {
       position: relative;
       overflow: hidden;
-      min-height: 238px;
+      min-height: 225px;
       background:
-        radial-gradient(circle at 82% 32%, rgba(226, 232, 240, .88), transparent 23%),
+        radial-gradient(circle at 82% 32%, rgba(226,232,240,.92), transparent 24%),
         linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      border-radius: 30px;
-      padding: 28px 24px;
+      border-radius: 34px;
+      padding: 32px 28px;
       margin-bottom: 18px;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(15, 23, 42, .045);
+      box-shadow: 0 24px 70px rgba(15,23,42,.08);
+      border: 1px solid rgba(15,23,42,.04);
     }
 
     .hero h1 {
       position: relative;
       z-index: 2;
       margin: 0;
-      font-size: 36px;
-      line-height: 1.08;
-      letter-spacing: -1px;
-      font-weight: 950;
+      font-size: 42px;
+      line-height: 1.02;
+      letter-spacing: -1.6px;
+      font-weight: 1000;
+      color: #07111f;
     }
 
     .hero h1 span {
-      color: var(--green);
+      color: #16a34a;
       display: block;
     }
 
@@ -131,19 +112,21 @@
       z-index: 2;
       margin-top: 18px;
       color: #53627a;
-      font-size: 16px;
-      line-height: 1.58;
-      max-width: 72%;
+      font-size: 17px;
+      line-height: 1.6;
+      max-width: 60%;
+      font-weight: 500;
     }
 
     .car-visual {
       position: absolute;
-      right: -16px;
-      top: 82px;
-      width: 230px;
-      height: 122px;
+      right: -42px;
+      top: 95px;
+      width: 215px;
+      height: 108px;
       z-index: 1;
-      filter: drop-shadow(0 22px 22px rgba(15, 23, 42, .12));
+      opacity: .74;
+      filter: drop-shadow(0 18px 22px rgba(15,23,42,.10));
     }
 
     .car-body {
@@ -153,11 +136,8 @@
       width: 230px;
       height: 74px;
       border-radius: 52px 32px 26px 28px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.98), rgba(225, 232, 240, .98));
-      box-shadow:
-        inset 0 -16px 22px rgba(15, 23, 42, .08),
-        inset 0 8px 18px rgba(255,255,255,.9);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(225,232,240,.98));
+      box-shadow: inset 0 -16px 22px rgba(15,23,42,.08), inset 0 8px 18px rgba(255,255,255,.9);
     }
 
     .car-roof {
@@ -167,9 +147,8 @@
       width: 112px;
       height: 58px;
       border-radius: 54px 54px 8px 8px;
-      background:
-        linear-gradient(180deg, #f8fafc, #dbe4ee);
-      box-shadow: inset 0 -10px 18px rgba(15, 23, 42, .08);
+      background: linear-gradient(180deg, #f8fafc, #dbe4ee);
+      box-shadow: inset 0 -10px 18px rgba(15,23,42,.08);
     }
 
     .car-window {
@@ -204,7 +183,7 @@
       grid-template-columns: 1fr 1fr 1fr;
       box-shadow: var(--shadow);
       margin-bottom: 18px;
-      border: 1px solid rgba(15, 23, 42, .045);
+      border: 1px solid rgba(15,23,42,.045);
     }
 
     .stat {
@@ -236,12 +215,12 @@
     }
 
     .list {
-      background: var(--card);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
+      background: #ffffff;
+      border-radius: 30px;
       overflow: hidden;
       margin-bottom: 18px;
-      border: 1px solid rgba(15, 23, 42, .045);
+      box-shadow: 0 20px 55px rgba(15,23,42,.07);
+      border: 1px solid rgba(15,23,42,.04);
     }
 
     .item {
@@ -306,12 +285,12 @@
       align-items: center;
       gap: 17px;
       background:
-        radial-gradient(circle at 90% 50%, rgba(19, 160, 95, .12), transparent 24%),
+        radial-gradient(circle at 90% 50%, rgba(19,160,95,.12), transparent 24%),
         linear-gradient(135deg, #ecfdf5, #ffffff);
       border: 1px solid #c9f2dc;
       border-radius: 28px;
       padding: 18px;
-      margin-bottom: 18px;
+      margin-bottom: 22px;
       box-shadow: var(--soft-shadow);
     }
 
@@ -327,7 +306,7 @@
       place-items: center;
       font-size: 31px;
       font-weight: 950;
-      box-shadow: 0 18px 35px rgba(19, 160, 95, .22);
+      box-shadow: 0 18px 35px rgba(19,160,95,.22);
     }
 
     .ai-title {
@@ -357,17 +336,21 @@
     }
 
     .bottom {
-      position: sticky;
-      bottom: 8px;
-      z-index: 10;
-      background: rgba(255,255,255,.88);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(15, 23, 42, .055);
-      border-radius: 28px;
-      box-shadow: 0 -8px 35px rgba(15, 23, 42, .09);
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 12px;
+      width: calc(100% - 28px);
+      max-width: 504px;
+      z-index: 100;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(22px);
+      border: 1px solid rgba(15,23,42,.05);
+      border-radius: 30px;
+      box-shadow: 0 -8px 35px rgba(15,23,42,.08);
       padding: 12px 8px 10px;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(5,1fr);
       gap: 4px;
     }
 
@@ -407,10 +390,11 @@
       border-radius: 18px;
       font-size: 16px;
       outline: none;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, .045);
+      box-shadow: 0 10px 25px rgba(15,23,42,.045);
     }
 
-    .primary, .secondary {
+    .primary,
+    .secondary {
       border: 0;
       border-radius: 18px;
       padding: 18px;
@@ -422,7 +406,7 @@
     .primary {
       background: linear-gradient(135deg, #0f9f58, #22c55e);
       color: white;
-      box-shadow: 0 15px 35px rgba(34, 197, 94, .25);
+      box-shadow: 0 15px 35px rgba(34,197,94,.25);
     }
 
     .secondary {
@@ -436,7 +420,7 @@
       padding: 18px;
       margin-top: 14px;
       box-shadow: var(--soft-shadow);
-      border: 1px solid rgba(15, 23, 42, .045);
+      border: 1px solid rgba(15,23,42,.045);
     }
 
     .score {
@@ -468,6 +452,8 @@
       .subtitle { max-width: 100%; }
       .car-visual { opacity: .22; right: -65px; top: 92px; }
       .power { display: none; }
+      .brand { font-size: 19px; }
+      .brand-car { width: 40px; height: 40px; }
     }
   </style>
 </head>
@@ -508,9 +494,10 @@
     function topbar(back = false) {
       return `
         <div class="topbar">
-          <button class="bell" onclick="${back ? 'home()' : ''}">${back ? '‹' : '🔔'}</button>
-          <div class="brand"><div class="brand-car">🚗</div> AUTO<span>SCAN</span> AI</div>
-          <button class="bell">🔔</button>
+          <div class="brand">
+            <div class="brand-car">🚗</div>
+            AUTO<span>SCAN</span> AI
+          </div>
         </div>
       `;
     }
