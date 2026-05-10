@@ -2,264 +2,370 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>AutoScan AI</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #07111f;
+      --muted: #64748b;
+      --green: #13a05f;
+      --green-dark: #087b45;
+      --red: #ef3b45;
+      --purple: #7c3aed;
+      --yellow: #f5b400;
+      --line: #e8edf4;
+      --shadow: 0 24px 70px rgba(15, 23, 42, .09);
+      --soft-shadow: 0 14px 36px rgba(15, 23, 42, .07);
+    }
 
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #f6f8fb;
-      color: #0f172a;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(19, 160, 95, .10), transparent 34%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      color: var(--text);
       padding: 18px;
     }
 
     .app {
       max-width: 520px;
       margin: 0 auto;
+      padding-bottom: 18px;
     }
 
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .menu, .bell {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      border: none;
-      background: #ffffff;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, .08);
-      font-size: 22px;
+      margin: 2px 0 22px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-weight: 900;
-      font-size: 19px;
+      gap: 11px;
+      font-size: 20px;
+      font-weight: 950;
+      letter-spacing: .4px;
+    }
+
+    .brand-car {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #e7f8ef;
+      box-shadow: 0 12px 25px rgba(19, 160, 95, .12);
     }
 
     .brand span {
-      color: #0f9f58;
+      color: var(--green);
+    }
+
+    .bell {
+      position: relative;
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      border: 0;
+      background: var(--card);
+      box-shadow: var(--soft-shadow);
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .bell::after {
+      content: "";
+      position: absolute;
+      right: 10px;
+      top: 9px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 2px solid #fff;
     }
 
     .hero {
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, #ffffff, #f8fafc);
-      border-radius: 28px;
-      padding: 26px;
+      min-height: 238px;
+      background:
+        radial-gradient(circle at 82% 32%, rgba(226, 232, 240, .88), transparent 23%),
+        linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 30px;
+      padding: 28px 24px;
       margin-bottom: 18px;
-      box-shadow: 0 24px 70px rgba(15, 23, 42, .08);
-      border: 1px solid rgba(15, 23, 42, .04);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, .045);
     }
 
     .hero h1 {
+      position: relative;
+      z-index: 2;
       margin: 0;
-      font-size: 34px;
+      font-size: 36px;
       line-height: 1.08;
-      letter-spacing: -.7px;
+      letter-spacing: -1px;
+      font-weight: 950;
     }
 
     .hero h1 span {
-      color: #0f9f58;
+      color: var(--green);
       display: block;
     }
 
     .subtitle {
-      margin-top: 16px;
-      color: #64748b;
+      position: relative;
+      z-index: 2;
+      margin-top: 18px;
+      color: #53627a;
       font-size: 16px;
-      line-height: 1.55;
-      max-width: 70%;
+      line-height: 1.58;
+      max-width: 72%;
     }
 
-    .car {
+    .car-visual {
       position: absolute;
-      right: -20px;
-      top: 72px;
-      width: 210px;
-      height: 105px;
-      border-radius: 24px;
+      right: -16px;
+      top: 82px;
+      width: 230px;
+      height: 122px;
+      z-index: 1;
+      filter: drop-shadow(0 22px 22px rgba(15, 23, 42, .12));
+    }
+
+    .car-body {
+      position: absolute;
+      left: 0;
+      bottom: 18px;
+      width: 230px;
+      height: 74px;
+      border-radius: 52px 32px 26px 28px;
       background:
-        linear-gradient(145deg, #ffffff, #dbe4ef);
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(225, 232, 240, .98));
       box-shadow:
-        inset 0 -12px 22px rgba(15, 23, 42, .10),
-        0 18px 45px rgba(15, 23, 42, .12);
-      opacity: .95;
+        inset 0 -16px 22px rgba(15, 23, 42, .08),
+        inset 0 8px 18px rgba(255,255,255,.9);
     }
 
-    .car::before {
-      content: "";
+    .car-roof {
       position: absolute;
-      left: 38px;
-      top: -28px;
-      width: 95px;
-      height: 46px;
-      border-radius: 48px 48px 6px 6px;
-      background: linear-gradient(145deg, #ffffff, #cbd5e1);
-      box-shadow: inset 0 -8px 16px rgba(15, 23, 42, .08);
-    }
-
-    .car::after {
-      content: "";
-      position: absolute;
-      left: 34px;
-      bottom: -15px;
-      width: 152px;
-      height: 30px;
+      left: 54px;
+      top: 4px;
+      width: 112px;
+      height: 58px;
+      border-radius: 54px 54px 8px 8px;
       background:
-        radial-gradient(circle at 20px 15px, #0f172a 0 13px, transparent 14px),
-        radial-gradient(circle at 132px 15px, #0f172a 0 13px, transparent 14px);
+        linear-gradient(180deg, #f8fafc, #dbe4ee);
+      box-shadow: inset 0 -10px 18px rgba(15, 23, 42, .08);
     }
+
+    .car-window {
+      position: absolute;
+      left: 76px;
+      top: 16px;
+      width: 72px;
+      height: 30px;
+      border-radius: 32px 32px 5px 5px;
+      background: linear-gradient(135deg, #cbd5e1, #eef4fb);
+    }
+
+    .wheel {
+      position: absolute;
+      bottom: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #172033;
+      border: 7px solid #f8fafc;
+      box-shadow: inset 0 0 0 4px #2a3448;
+    }
+
+    .wheel.left { left: 45px; }
+    .wheel.right { right: 34px; }
 
     .stats {
-      background: #ffffff;
-      border-radius: 24px;
-      padding: 20px 12px;
+      background: var(--card);
+      border-radius: 26px;
+      padding: 20px 12px 18px;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 0;
-      box-shadow: 0 18px 50px rgba(15, 23, 42, .08);
+      box-shadow: var(--shadow);
       margin-bottom: 18px;
+      border: 1px solid rgba(15, 23, 42, .045);
     }
 
     .stat {
       text-align: center;
-      border-right: 1px solid #e5e7eb;
+      border-right: 1px solid var(--line);
     }
 
     .stat:last-child {
-      border-right: none;
+      border-right: 0;
     }
 
     .num {
-      color: #0f9f58;
-      font-weight: 900;
-      font-size: 28px;
+      color: var(--green);
+      font-weight: 950;
+      font-size: 29px;
+      line-height: 1;
     }
 
     .label {
-      color: #64748b;
+      color: var(--muted);
       font-size: 13px;
-      margin-top: 6px;
+      margin-top: 8px;
     }
 
     .spark {
-      margin: 10px auto 0;
-      width: 58px;
-      height: 16px;
-      border-bottom: 2px solid #16a34a;
-      border-radius: 50%;
-      opacity: .7;
+      width: 68px;
+      height: 18px;
+      margin: 11px auto 0;
     }
 
     .list {
-      background: #ffffff;
-      border-radius: 26px;
-      box-shadow: 0 20px 60px rgba(15, 23, 42, .08);
+      background: var(--card);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
       overflow: hidden;
       margin-bottom: 18px;
+      border: 1px solid rgba(15, 23, 42, .045);
     }
 
     .item {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 17px;
       padding: 20px;
-      border-bottom: 1px solid #eef2f7;
+      border-bottom: 1px solid var(--line);
       cursor: pointer;
+      transition: background .15s ease, transform .15s ease;
+    }
+
+    .item:active {
+      transform: scale(.992);
+      background: #f8fafc;
     }
 
     .item:last-child {
-      border-bottom: none;
+      border-bottom: 0;
     }
 
     .icon {
-      min-width: 56px;
-      height: 56px;
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      font-weight: 900;
+      min-width: 58px;
+      height: 58px;
+      border-radius: 19px;
+      display: grid;
+      place-items: center;
     }
 
-    .i-green { background: #e8f8ef; color: #0f9f58; }
-    .i-red { background: #fff1f2; color: #ef4444; }
-    .i-purple { background: #f3e8ff; color: #7c3aed; }
-    .i-yellow { background: #fff7dd; color: #eab308; }
+    .icon svg {
+      width: 29px;
+      height: 29px;
+      stroke-width: 2.4;
+    }
+
+    .i-green { background: #e8f8ef; color: var(--green); }
+    .i-red { background: #fff0f1; color: var(--red); }
+    .i-purple { background: #f2e8ff; color: var(--purple); }
+    .i-yellow { background: #fff6da; color: var(--yellow); }
 
     .item-title {
       font-size: 20px;
-      font-weight: 900;
+      font-weight: 950;
       margin-bottom: 5px;
+      letter-spacing: -.2px;
     }
 
     .item-sub {
-      color: #64748b;
+      color: var(--muted);
       font-size: 15px;
     }
 
     .arrow {
       margin-left: auto;
       color: #64748b;
-      font-size: 26px;
+      font-size: 32px;
+      line-height: 1;
     }
 
     .ai-card {
       display: flex;
       align-items: center;
-      gap: 16px;
-      background: linear-gradient(135deg, #ecfdf5, #ffffff);
-      border: 1px solid #d1fae5;
-      border-radius: 26px;
+      gap: 17px;
+      background:
+        radial-gradient(circle at 90% 50%, rgba(19, 160, 95, .12), transparent 24%),
+        linear-gradient(135deg, #ecfdf5, #ffffff);
+      border: 1px solid #c9f2dc;
+      border-radius: 28px;
       padding: 18px;
       margin-bottom: 18px;
-      box-shadow: 0 18px 50px rgba(15, 23, 42, .06);
+      box-shadow: var(--soft-shadow);
     }
 
     .ai-icon {
-      width: 68px;
-      height: 68px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #047857, #22c55e);
+      min-width: 72px;
+      height: 72px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(255,255,255,.18), transparent 28%),
+        linear-gradient(135deg, #047857, #16a34a);
       color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 30px;
-      font-weight: 900;
+      display: grid;
+      place-items: center;
+      font-size: 31px;
+      font-weight: 950;
+      box-shadow: 0 18px 35px rgba(19, 160, 95, .22);
     }
 
     .ai-title {
-      font-weight: 900;
+      font-weight: 950;
       font-size: 20px;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
 
     .ai-sub {
-      color: #64748b;
+      color: var(--muted);
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.45;
+    }
+
+    .power {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 13px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: var(--green-dark);
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
     }
 
     .bottom {
       position: sticky;
-      bottom: 0;
-      background: #ffffff;
-      border-radius: 26px;
-      box-shadow: 0 -10px 35px rgba(15, 23, 42, .08);
-      padding: 12px 8px;
+      bottom: 8px;
+      z-index: 10;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(15, 23, 42, .055);
+      border-radius: 28px;
+      box-shadow: 0 -8px 35px rgba(15, 23, 42, .09);
+      padding: 12px 8px 10px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 4px;
@@ -269,20 +375,21 @@
       text-align: center;
       color: #64748b;
       font-size: 12px;
+      cursor: pointer;
+      font-weight: 650;
     }
 
-    .tab div {
-      font-size: 24px;
-      margin-bottom: 3px;
+    .tab svg {
+      width: 26px;
+      height: 26px;
+      display: block;
+      margin: 0 auto 4px;
+      stroke-width: 2.2;
     }
 
     .active {
-      color: #0f9f58;
-      font-weight: 800;
-    }
-
-    .screen {
-      display: none;
+      color: var(--green);
+      font-weight: 950;
     }
 
     .form {
@@ -293,35 +400,34 @@
 
     input {
       width: 100%;
-      border: 1px solid #e5e7eb;
+      border: 1px solid #e5eaf1;
       background: #ffffff;
-      color: #0f172a;
+      color: var(--text);
       padding: 16px;
       border-radius: 18px;
       font-size: 16px;
       outline: none;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, .04);
+      box-shadow: 0 10px 25px rgba(15, 23, 42, .045);
+    }
+
+    .primary, .secondary {
+      border: 0;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 950;
+      cursor: pointer;
     }
 
     .primary {
-      border: none;
-      border-radius: 18px;
-      padding: 18px;
       background: linear-gradient(135deg, #0f9f58, #22c55e);
       color: white;
-      font-size: 17px;
-      font-weight: 900;
       box-shadow: 0 15px 35px rgba(34, 197, 94, .25);
     }
 
     .secondary {
-      border: none;
-      border-radius: 18px;
-      padding: 18px;
-      background: #e5e7eb;
-      color: #0f172a;
-      font-size: 17px;
-      font-weight: 900;
+      background: #e8edf4;
+      color: var(--text);
     }
 
     .result-card {
@@ -329,7 +435,8 @@
       border-radius: 24px;
       padding: 18px;
       margin-top: 14px;
-      box-shadow: 0 18px 50px rgba(15, 23, 42, .08);
+      box-shadow: var(--soft-shadow);
+      border: 1px solid rgba(15, 23, 42, .045);
     }
 
     .score {
@@ -338,26 +445,29 @@
       background: #dcfce7;
       color: #15803d;
       border-radius: 999px;
-      font-weight: 900;
+      font-weight: 950;
       margin-bottom: 10px;
       font-size: 13px;
     }
 
     .price {
       font-size: 24px;
-      font-weight: 900;
+      font-weight: 950;
       margin: 8px 0;
     }
 
     .muted {
-      color: #64748b;
+      color: var(--muted);
       line-height: 1.45;
     }
 
-    @media (max-width: 420px) {
-      .hero h1 { font-size: 30px; }
+    @media (max-width: 430px) {
+      body { padding: 14px; }
+      .hero { min-height: 230px; padding: 24px 22px; }
+      .hero h1 { font-size: 31px; }
       .subtitle { max-width: 100%; }
-      .car { opacity: .22; right: -55px; }
+      .car-visual { opacity: .22; right: -65px; top: 92px; }
+      .power { display: none; }
     }
   </style>
 </head>
@@ -373,83 +483,98 @@
 
     const app = document.getElementById("app");
 
-    function home() {
-      app.innerHTML = `
+    const icons = {
+      search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>`,
+      bell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>`,
+      target: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>`,
+      chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5"></path><path d="M9 19V9"></path><path d="M14 19V7"></path><path d="M19 19V12"></path></svg>`,
+      star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3z"></path></svg>`,
+      home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>`,
+      user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 14.5-4 16 0"></path></svg>`
+    };
+
+    function carVisual() {
+      return `
+        <div class="car-visual">
+          <div class="car-roof"></div>
+          <div class="car-window"></div>
+          <div class="car-body"></div>
+          <div class="wheel left"></div>
+          <div class="wheel right"></div>
+        </div>
+      `;
+    }
+
+    function topbar(back = false) {
+      return `
         <div class="topbar">
-          <button class="menu">☰</button>
-          <div class="brand">🚗 AUTO<span>SCAN</span> AI</div>
+          <button class="bell" onclick="${back ? 'home()' : ''}">${back ? '‹' : '🔔'}</button>
+          <div class="brand"><div class="brand-car">🚗</div> AUTO<span>SCAN</span> AI</div>
           <button class="bell">🔔</button>
         </div>
+      `;
+    }
+
+    function bottom(active = "home") {
+      return `
+        <div class="bottom">
+          <div class="tab ${active === "home" ? "active" : ""}" onclick="home()">${icons.home}Главная</div>
+          <div class="tab ${active === "search" ? "active" : ""}" onclick="searchScreen()">${icons.search}Поиск</div>
+          <div class="tab ${active === "fav" ? "active" : ""}" onclick="simpleScreen('⭐ Избранное', 'Здесь будут сохранённые автомобили пользователя.', 'fav')">${icons.star}Избранное</div>
+          <div class="tab ${active === "market" ? "active" : ""}" onclick="simpleScreen('📈 Рынок', 'Здесь будет аналитика рынка.', 'market')">${icons.chart}Рынок</div>
+          <div class="tab ${active === "profile" ? "active" : ""}" onclick="simpleScreen('👤 Профиль', 'Здесь будет профиль и подписка пользователя.', 'profile')">${icons.user}Профиль</div>
+        </div>
+      `;
+    }
+
+    function spark() {
+      return `<svg class="spark" viewBox="0 0 80 20" fill="none"><path d="M2 14 C14 8 22 18 34 10 S54 6 64 12 S74 9 78 6" stroke="#16a34a" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+    }
+
+    function home() {
+      app.innerHTML = `
+        ${topbar(false)}
 
         <div class="hero">
           <h1>Умный поиск <span>выгодных авто</span></h1>
-          <div class="subtitle">
-            Ищем лучшие предложения на рынке и находим сделки быстрее всех.
-          </div>
-          <div class="car"></div>
+          <div class="subtitle">Ищем лучшие предложения на рынке и находим сделки быстрее всех.</div>
+          ${carVisual()}
         </div>
 
         <div class="stats">
-          <div class="stat">
-            <div class="num">12</div>
-            <div class="label">сигналов</div>
-            <div class="spark"></div>
-          </div>
-          <div class="stat">
-            <div class="num">8</div>
-            <div class="label">ниже рынка</div>
-            <div class="spark"></div>
-          </div>
-          <div class="stat">
-            <div class="num">5</div>
-            <div class="label">фильтров</div>
-            <div class="spark"></div>
-          </div>
+          <div class="stat"><div class="num">12</div><div class="label">сигналов</div>${spark()}</div>
+          <div class="stat"><div class="num">8</div><div class="label">ниже рынка</div>${spark()}</div>
+          <div class="stat"><div class="num">5</div><div class="label">фильтров</div>${spark()}</div>
         </div>
 
         <div class="list">
           <div class="item" onclick="searchScreen()">
-            <div class="icon i-green">⌕</div>
-            <div>
-              <div class="item-title">Найти авто</div>
-              <div class="item-sub">по выгодности</div>
-            </div>
+            <div class="icon i-green">${icons.search}</div>
+            <div><div class="item-title">Найти авто</div><div class="item-sub">по выгодности</div></div>
             <div class="arrow">›</div>
           </div>
 
-          <div class="item" onclick="simpleScreen('🚨 Сигналы', 'Здесь будут свежие объявления ниже рынка и новые сделки.')">
-            <div class="icon i-red">♟</div>
-            <div>
-              <div class="item-title">Сигналы</div>
-              <div class="item-sub">новые сделки</div>
-            </div>
+          <div class="item" onclick="simpleScreen('🚨 Сигналы', 'Здесь будут свежие объявления ниже рынка и новые сделки.', 'signals')">
+            <div class="icon i-red">${icons.bell}</div>
+            <div><div class="item-title">Сигналы</div><div class="item-sub">новые сделки</div></div>
             <div class="arrow">›</div>
           </div>
 
-          <div class="item" onclick="simpleScreen('🎯 Фильтры', 'Здесь пользователь сможет создавать фильтры и мониторить объявления.')">
-            <div class="icon i-green">◎</div>
-            <div>
-              <div class="item-title">Фильтры</div>
-              <div class="item-sub">мониторинг объявлений</div>
-            </div>
+          <div class="item" onclick="simpleScreen('🎯 Фильтры', 'Здесь пользователь сможет создавать фильтры и мониторить объявления.', 'filters')">
+            <div class="icon i-green">${icons.target}</div>
+            <div><div class="item-title">Фильтры</div><div class="item-sub">мониторинг объявлений</div></div>
             <div class="arrow">›</div>
           </div>
 
-          <div class="item" onclick="simpleScreen('📈 Рынок', 'Здесь будет аналитика цен, средняя цена, минимум, максимум и статистика.')">
-            <div class="icon i-purple">▥</div>
-            <div>
-              <div class="item-title">Рынок</div>
-              <div class="item-sub">аналитика цен и статистика</div>
-            </div>
+          <div class="item" onclick="simpleScreen('📈 Рынок', 'Здесь будет аналитика цен, средняя цена, минимум, максимум и статистика.', 'market')">
+            <div class="icon i-purple">${icons.chart}</div>
+            <div><div class="item-title">Рынок</div><div class="item-sub">аналитика цен и статистика</div></div>
             <div class="arrow">›</div>
           </div>
 
-          <div class="item" onclick="simpleScreen('⭐ Избранное', 'Здесь будут сохранённые автомобили пользователя.')">
-            <div class="icon i-yellow">★</div>
-            <div>
-              <div class="item-title">Избранное</div>
-              <div class="item-sub">сохранённые авто</div>
-            </div>
+          <div class="item" onclick="simpleScreen('⭐ Избранное', 'Здесь будут сохранённые автомобили пользователя.', 'fav')">
+            <div class="icon i-yellow">${icons.star}</div>
+            <div><div class="item-title">Избранное</div><div class="item-sub">сохранённые авто</div></div>
             <div class="arrow">›</div>
           </div>
         </div>
@@ -458,29 +583,18 @@
           <div class="ai-icon">AI</div>
           <div>
             <div class="ai-title">AutoScan AI</div>
-            <div class="ai-sub">
-              Анализируем рынок, считаем выгоду и находим лучшие варианты для вас.
-            </div>
+            <div class="ai-sub">Анализируем рынок, считаем выгоду и находим лучшие варианты для вас.</div>
           </div>
+          <div class="power">⚡ AI POWER</div>
         </div>
 
-        <div class="bottom">
-          <div class="tab active" onclick="home()"><div>⌂</div>Главная</div>
-          <div class="tab" onclick="searchScreen()"><div>⌕</div>Поиск</div>
-          <div class="tab" onclick="simpleScreen('⭐ Избранное', 'Здесь будут сохранённые автомобили пользователя.')"><div>☆</div>Избранное</div>
-          <div class="tab" onclick="simpleScreen('📈 Рынок', 'Здесь будет аналитика рынка.')"><div>▥</div>Рынок</div>
-          <div class="tab" onclick="simpleScreen('👤 Профиль', 'Здесь будет профиль и подписка пользователя.')"><div>♙</div>Профиль</div>
-        </div>
+        ${bottom("home")}
       `;
     }
 
-    function simpleScreen(title, text) {
+    function simpleScreen(title, text, active = "home") {
       app.innerHTML = `
-        <div class="topbar">
-          <button class="menu" onclick="home()">‹</button>
-          <div class="brand">🚗 AUTO<span>SCAN</span> AI</div>
-          <button class="bell">🔔</button>
-        </div>
+        ${topbar(true)}
 
         <div class="hero">
           <h1>${title}</h1>
@@ -488,22 +602,19 @@
         </div>
 
         <button class="secondary" onclick="home()">⬅️ Назад</button>
+
+        ${bottom(active)}
       `;
     }
 
     function searchScreen() {
       app.innerHTML = `
-        <div class="topbar">
-          <button class="menu" onclick="home()">‹</button>
-          <div class="brand">🚗 AUTO<span>SCAN</span> AI</div>
-          <button class="bell">🔔</button>
-        </div>
+        ${topbar(true)}
 
         <div class="hero">
           <h1>Найти <span>выгодное авто</span></h1>
-          <div class="subtitle">
-            Введите параметры — AutoScan подберёт лучшие варианты по выгодности.
-          </div>
+          <div class="subtitle">Введите параметры — AutoScan подберёт лучшие варианты по выгодности.</div>
+          ${carVisual()}
         </div>
 
         <div class="form">
@@ -518,6 +629,8 @@
         </div>
 
         <div id="results"></div>
+
+        ${bottom("search")}
       `;
     }
 
