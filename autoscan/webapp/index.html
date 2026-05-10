@@ -118,9 +118,65 @@
   </div>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-  </script>
-</body>
-</html>
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+
+  function showScreen(title, text) {
+    document.body.innerHTML = `
+      <div class="hero">
+        <h1>${title}</h1>
+        <div class="subtitle">${text}</div>
+      </div>
+
+      <div class="grid">
+        <button class="btn blue wide" onclick="goBack()">⬅️ Назад</button>
+      </div>
+    `;
+  }
+
+  function goBack() {
+    location.reload();
+  }
+
+  document.querySelectorAll(".btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      const text = button.innerText;
+
+      if (text.includes("Найти авто")) {
+        showScreen(
+          "🔥 Найти авто",
+          "Скоро здесь будет поиск: марка, модель, год, город, бюджет и сортировка по выгодности."
+        );
+      }
+
+      if (text.includes("Сигналы")) {
+        showScreen(
+          "🚨 Сигналы",
+          "Здесь будут свежие объявления ниже рынка, срочные продажи и топ-сделки дня."
+        );
+      }
+
+      if (text.includes("Фильтры")) {
+        showScreen(
+          "🎯 Фильтры",
+          "Здесь пользователь сможет создать фильтр: Camry 2015–2020, Москва, до 2 млн ₽."
+        );
+      }
+
+      if (text.includes("Рынок")) {
+        showScreen(
+          "📈 Рынок",
+          "Здесь будет аналитика: средняя цена, минимум, максимум и динамика по модели."
+        );
+      }
+
+      if (text.includes("Избранное")) {
+        showScreen(
+          "⭐ Избранное",
+          "Здесь будут сохранённые автомобили пользователя."
+        );
+      }
+    });
+  });
+</script>
