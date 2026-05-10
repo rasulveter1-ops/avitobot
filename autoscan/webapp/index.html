@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoScan AI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      padding: 18px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e293b, #020617);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 20px;
+      padding: 20px 14px;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: left;
+      min-height: 92px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+    }
+
+    .blue { background: linear-gradient(135deg, #2563eb, #0ea5e9); }
+    .red { background: linear-gradient(135deg, #dc2626, #f97316); }
+    .green { background: linear-gradient(135deg, #16a34a, #22c55e); }
+    .purple { background: linear-gradient(135deg, #7c3aed, #db2777); }
+    .dark { background: linear-gradient(135deg, #334155, #111827); }
+
+    .wide {
+      grid-column: span 2;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .stat {
+      background: #1e293b;
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .num {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .label {
+      color: #94a3b8;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>🚗 AutoScan AI</h1>
+    <div class="subtitle">
+      Ищу выгодные авто, считаю рынок и нахожу сделки быстрее, чем ты откроешь Авито.
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="num">0</div>
+      <div class="label">сигналов</div>
+    </div>
+    <div class="stat">
+      <div class="num">0</div>
+      <div class="label">ниже рынка</div>
+    </div>
+    <div class="stat">
+      <div class="num">0</div>
+      <div class="label">фильтров</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <button class="btn blue">🔥 Найти авто</button>
+    <button class="btn red">🚨 Сигналы</button>
+    <button class="btn green">🎯 Фильтры</button>
+    <button class="btn purple">📈 Рынок</button>
+    <button class="btn dark wide">⭐ Избранное</button>
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+  </script>
+</body>
+</html>

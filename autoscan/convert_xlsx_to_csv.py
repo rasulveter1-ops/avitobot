@@ -1,0 +1,14 @@
+import pandas as pd
+
+XLSX_PATH = "190105.xlsx"
+CSV_PATH = "190105.csv"
+
+print("Читаем Excel...")
+df = pd.read_excel(XLSX_PATH, engine="openpyxl")
+
+print(f"Строк: {len(df)}")
+
+print("Сохраняем CSV...")
+df.to_csv(CSV_PATH, index=False, encoding="utf-8-sig")
+
+print(f"Готово: {CSV_PATH}")

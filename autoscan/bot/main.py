@@ -5,7 +5,8 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import (
     Message, CallbackQuery,
     InlineKeyboardMarkup, InlineKeyboardButton,
-    ReplyKeyboardMarkup, KeyboardButton
+    ReplyKeyboardMarkup, KeyboardButton,
+    WebAppInfo
 )
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -43,11 +44,36 @@ class AdvisorState(StatesGroup):
 # ============ Keyboards ============
 
 def main_menu_keyboard():
+
+    webapp_url = os.getenv(
+        "WEBAPP_URL",
+        "https://your-app.up.railway.app"
+    )
+
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🔍 Мои фильтры"), KeyboardButton(text="💾 Сохранённые")],
-            [KeyboardButton(text="📊 Аналитика рынка"), KeyboardButton(text="💼 Мои сделки")],
-            [KeyboardButton(text="🤖 AI-советник"), KeyboardButton(text="⚙️ Настройки")],
+
+            [
+                KeyboardButton(
+                    text="🚀 Открыть AutoScan App",
+                    web_app=WebAppInfo(url=webapp_url)
+                )
+            ],
+
+            [
+                KeyboardButton(text="🔥 Найти авто"),
+                KeyboardButton(text="🚨 Сигналы")
+            ],
+
+            [
+                KeyboardButton(text="🎯 Фильтры"),
+                KeyboardButton(text="📈 Рынок")
+            ],
+
+            [
+                KeyboardButton(text="⭐ Избранное"),
+                KeyboardButton(text="⚙️ Настройки")
+            ]
         ],
         resize_keyboard=True
     )

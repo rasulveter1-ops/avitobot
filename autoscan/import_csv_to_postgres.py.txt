@@ -1,0 +1,178 @@
+import pandas as pd
+from sqlalchemy import create_engine, text
+
+DATABASE_URL = "postgresql://postgres:SHpxDdSumTlEbBIAazWOFEMTFggjCNCN@postgres.railway.internal:5432/railway"
+
+CSV_PATH = "190105.csv"
+BATCH_SIZE = 5000
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgres://",
+        "postgresql://",
+        1
+    )
+
+engine = create_engine(DATABASE_URL)
+
+
+def create_tables():
+    with engine.begin() as conn:
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS catalog (
+                id SERIAL PRIMARY KEY,
+                avito_id TEXT UNIQUE,
+                title TEXT,
+                price BIGINT,
+                brand TEXT,
+                model TEXT,
+                year INTEGER,
+                mileage INTEGER,
+                city TEXT,
+                region TEXT,
+                seller_type TEXT,
+                url TEXT,
+                imported_at TIMESTAMP DEFAULT NOW()
+            )
+        """))
+
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_catalog_brand
+            ON catalog(brand)
+        """))
+
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_catalog_price
+            ON catalog(price)
+        """))
+
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_catalog_year
+            ON catalog(year)
+        """))
+
+    print("Таблица готова")
+
+
+def process_row(row):
+
+    title = str(row.get("Название", ""))
+
+    brand = None
+    model = None
+
+    brands = [
+        "Toyota", "Honda", "Kia", "Hyundai",
+        "BMW", "Mercedes", "Audi",
+        "Lada", "ВАЗ"
+    ]
+
+    for b in brands:
+        if b.lower() in title.lower():
+            brand = b
+
+            parts = title.split()
+
+            if len(parts) > 1:
+                model = parts[1]
+
+            break
+
+    try:
+        price = int(
+            str(row.get("Цена", 0))
+            .replace("₽", "")
+            .replace(" ", "")
+        )
+    except:
+        price = 0
+
+    try:
+        mileage = int(
+            str(row.get("Пробег", 0))
+            .replace("км", "")
+            .replace(" ", "")
+        )
+    except:
+        mileage = None
+
+    return {
+        "avito_id": str(row.get("uID", "")),
+        "title": title,
+        "price": price,
+        "brand": brand,
+        "model": model,
+        "year": None,
+        "mileage": mileage,
+        "city": str(row.get("Город", "")),
+        "region": str(row.get("Регион", "")),
+        "seller_type": str(row.get("Тип пользователя", "")),
+        "url": str(row.get("Ссылка на объявление", ""))
+    }
+
+
+def import_csv():
+
+    total = 0
+
+    insert_sql = text("""
+        INSERT INTO catalog (
+            avito_id,
+            title,
+            price,
+            brand,
+            model,
+            year,
+            mileage,
+            city,
+            region,
+            seller_type,
+            url
+        )
+        VALUES (
+            :avito_id,
+            :title,
+            :price,
+            :brand,
+            :model,
+            :year,
+            :mileage,
+            :city,
+            :region,
+            :seller_type,
+            :url
+        )
+        ON CONFLICT (avito_id)
+        DO NOTHING
+    """)
+
+    for chunk in pd.read_csv(
+        CSV_PATH,
+        chunksize=BATCH_SIZE,
+        low_memory=False
+    ):
+
+        rows = []
+
+        for _, row in chunk.iterrows():
+
+            rows.append(
+                process_row(row.to_dict())
+            )
+
+            total += 1
+
+        with engine.begin() as conn:
+            conn.execute(insert_sql, rows)
+
+        print(f"Импортировано: {total}")
+
+
+if __name__ == "__main__":
+
+    create_tables()
+
+    import_csv()
+
+    print("ГОТОВО")
