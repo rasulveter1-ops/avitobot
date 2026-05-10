@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AutoScan AI</title>
+
   <style>
     body {
       margin: 0;
@@ -24,6 +25,10 @@
     h1 {
       margin: 0;
       font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 0;
     }
 
     .subtitle {
@@ -48,13 +53,28 @@
       text-align: left;
       min-height: 92px;
       box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      cursor: pointer;
     }
 
-    .blue { background: linear-gradient(135deg, #2563eb, #0ea5e9); }
-    .red { background: linear-gradient(135deg, #dc2626, #f97316); }
-    .green { background: linear-gradient(135deg, #16a34a, #22c55e); }
-    .purple { background: linear-gradient(135deg, #7c3aed, #db2777); }
-    .dark { background: linear-gradient(135deg, #334155, #111827); }
+    .blue {
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    }
+
+    .red {
+      background: linear-gradient(135deg, #dc2626, #f97316);
+    }
+
+    .green {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+    }
+
+    .purple {
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+    }
+
+    .dark {
+      background: linear-gradient(135deg, #334155, #111827);
+    }
 
     .wide {
       grid-column: span 2;
@@ -84,11 +104,52 @@
       font-size: 12px;
       margin-top: 4px;
     }
+
+    .form {
+      display: grid;
+      gap: 12px;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: white;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #64748b;
+    }
+
+    .result-card {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 16px;
+      margin-top: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+    }
+
+    .score {
+      display: inline-block;
+      padding: 6px 10px;
+      background: #16a34a;
+      border-radius: 999px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
+
 <body>
+
   <div class="hero">
     <h1>🚗 AutoScan AI</h1>
+
     <div class="subtitle">
       Ищу выгодные авто, считаю рынок и нахожу сделки быстрее, чем ты откроешь Авито.
     </div>
@@ -99,10 +160,12 @@
       <div class="num">0</div>
       <div class="label">сигналов</div>
     </div>
+
     <div class="stat">
       <div class="num">0</div>
       <div class="label">ниже рынка</div>
     </div>
+
     <div class="stat">
       <div class="num">0</div>
       <div class="label">фильтров</div>
@@ -118,65 +181,144 @@
   </div>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script>
-  const tg = window.Telegram.WebApp;
-  tg.expand();
 
-  function showScreen(title, text) {
-    document.body.innerHTML = `
-      <div class="hero">
-        <h1>${title}</h1>
-        <div class="subtitle">${text}</div>
-      </div>
+  <script>
 
-      <div class="grid">
-        <button class="btn blue wide" onclick="goBack()">⬅️ Назад</button>
-      </div>
-    `;
-  }
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-  function goBack() {
-    location.reload();
-  }
+    function goBack() {
+      location.reload();
+    }
 
-  document.querySelectorAll(".btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const text = button.innerText;
+    function showScreen(title, text) {
+      document.body.innerHTML = `
+        <div class="hero">
+          <h1>${title}</h1>
+          <div class="subtitle">${text}</div>
+        </div>
 
-      if (text.includes("Найти авто")) {
-        showScreen(
-          "🔥 Найти авто",
-          "Скоро здесь будет поиск: марка, модель, год, город, бюджет и сортировка по выгодности."
-        );
-      }
+        <div class="grid">
+          <button class="btn blue wide" onclick="goBack()">⬅️ Назад</button>
+        </div>
+      `;
+    }
 
-      if (text.includes("Сигналы")) {
-        showScreen(
-          "🚨 Сигналы",
-          "Здесь будут свежие объявления ниже рынка, срочные продажи и топ-сделки дня."
-        );
-      }
+    function searchCars() {
 
-      if (text.includes("Фильтры")) {
-        showScreen(
-          "🎯 Фильтры",
-          "Здесь пользователь сможет создать фильтр: Camry 2015–2020, Москва, до 2 млн ₽."
-        );
-      }
+      const brand = document.getElementById("brand").value || "Toyota";
+      const model = document.getElementById("model").value || "Camry";
+      const city = document.getElementById("city").value || "Москва";
+      const budget = document.getElementById("budget").value || "2000000";
 
-      if (text.includes("Рынок")) {
-        showScreen(
-          "📈 Рынок",
-          "Здесь будет аналитика: средняя цена, минимум, максимум и динамика по модели."
-        );
-      }
+      document.getElementById("results").innerHTML = `
 
-      if (text.includes("Избранное")) {
-        showScreen(
-          "⭐ Избранное",
-          "Здесь будут сохранённые автомобили пользователя."
-        );
-      }
+        <div class="result-card">
+          <div class="score">🟢 Deal Score 91</div>
+
+          <h2>${brand} ${model}</h2>
+
+          <p>💰 до ${budget} ₽</p>
+          <p>📍 ${city}</p>
+          <p>📉 Ниже рынка примерно на 14–18%</p>
+
+          <p>
+            ⚡ Данные пока тестовые.
+            После подключения API здесь будут реальные объявления.
+          </p>
+        </div>
+
+        <div class="result-card">
+          <div class="score">🟡 Deal Score 76</div>
+
+          <h2>${brand} ${model}</h2>
+
+          <p>💰 до ${budget} ₽</p>
+          <p>📍 ${city}</p>
+
+          <p>
+            📊 Цена близка к рынку,
+            стоит проверить историю.
+          </p>
+        </div>
+
+      `;
+    }
+
+    document.querySelectorAll(".btn").forEach((button) => {
+
+      button.addEventListener("click", () => {
+
+        const text = button.innerText;
+
+        if (text.includes("Найти авто")) {
+
+          document.body.innerHTML = `
+
+            <div class="hero">
+              <h1>🔥 Найти авто</h1>
+
+              <div class="subtitle">
+                Введи параметры — AutoScan найдёт самые интересные варианты.
+              </div>
+            </div>
+
+            <div class="form">
+
+              <input id="brand" placeholder="Марка: Toyota" />
+              <input id="model" placeholder="Модель: Camry" />
+              <input id="year" placeholder="Год от: 2015" />
+              <input id="city" placeholder="Город: Москва" />
+              <input id="budget" placeholder="Бюджет до: 2000000" />
+
+              <button class="btn blue wide" onclick="searchCars()">
+                🔎 Найти выгодные авто
+              </button>
+
+              <button class="btn dark wide" onclick="goBack()">
+                ⬅️ Назад
+              </button>
+
+            </div>
+
+            <div id="results"></div>
+
+          `;
+        }
+
+        if (text.includes("Сигналы")) {
+          showScreen(
+            "🚨 Сигналы",
+            "Здесь будут свежие объявления ниже рынка и топ-сделки дня."
+          );
+        }
+
+        if (text.includes("Фильтры")) {
+          showScreen(
+            "🎯 Фильтры",
+            "Здесь пользователь сможет создавать фильтры поиска."
+          );
+        }
+
+        if (text.includes("Рынок")) {
+          showScreen(
+            "📈 Рынок",
+            "Здесь будет аналитика по ценам и динамике рынка."
+          );
+        }
+
+        if (text.includes("Избранное")) {
+          showScreen(
+            "⭐ Избранное",
+            "Здесь будут сохранённые автомобили пользователя."
+          );
+        }
+
+      });
+
     });
-  });
-</script>
+
+  </script>
+
+</body>
+</html>
