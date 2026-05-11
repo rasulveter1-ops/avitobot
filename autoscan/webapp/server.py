@@ -1,6 +1,7 @@
 import os
 from aiohttp import web
 from loguru import logger
+from webapp.api import setup_api
 
 
 async def index(request):
@@ -10,7 +11,10 @@ async def index(request):
 
 async def start_webapp():
     app = web.Application()
+
     app.router.add_get("/", index)
+
+    setup_api(app)
 
     port = int(os.getenv("PORT", 8080))
 
