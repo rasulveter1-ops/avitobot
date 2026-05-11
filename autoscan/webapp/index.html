@@ -22,55 +22,16 @@
 
 body{
   background:#eef2f5;
-  font-family:
-    Inter,
-    Arial,
-    sans-serif;
-
+  font-family:Inter,Arial,sans-serif;
   color:#0f172a;
-
   padding:20px;
-
   -webkit-font-smoothing:antialiased;
 }
 
-</style>
-
-</head>
-
-<body>
-
-
-
-  <div class="section-title">
-    🔥 Реальные объявления AutoScan
-  </div>
-
-  <div id="cars">
-
-    <div class="loading-wrap">
-      <div class="loader"></div>
-      <div class="loading-text">
-        Ищем выгодные автомобили...
-      </div>
-    </div>
-
-  </div>
-
-</section>
-
-<style>
-
-.cars-section{
-  margin-top:22px;
-  padding-bottom:120px;
-}
-
 .section-title{
-  font-size:24px;
+  font-size:26px;
   font-weight:900;
-  color:#0f172a;
-  margin-bottom:16px;
+  margin-bottom:18px;
   letter-spacing:-0.5px;
 }
 
@@ -83,8 +44,8 @@ body{
 }
 
 .loader{
-  width:46px;
-  height:46px;
+  width:48px;
+  height:48px;
   border:4px solid #dbeafe;
   border-top:4px solid #22c55e;
   border-radius:50%;
@@ -95,7 +56,7 @@ body{
   margin-top:14px;
   color:#64748b;
   font-size:15px;
-  font-weight:600;
+  font-weight:700;
 }
 
 @keyframes spin{
@@ -105,15 +66,15 @@ body{
 }
 
 .car-card{
-  background:#ffffff;
-  border-radius:26px;
-  padding:20px;
-  margin-bottom:18px;
-  box-shadow:
-    0 10px 40px rgba(15,23,42,.06),
-    0 2px 10px rgba(15,23,42,.03);
-
+  background:#fff;
+  border-radius:28px;
+  padding:22px;
+  margin-bottom:20px;
   border:1px solid #e2e8f0;
+
+  box-shadow:
+    0 10px 30px rgba(15,23,42,.05),
+    0 2px 10px rgba(15,23,42,.03);
 }
 
 .car-top{
@@ -124,30 +85,60 @@ body{
 }
 
 .car-title{
-  font-size:18px;
+  font-size:19px;
   line-height:1.35;
   font-weight:900;
-  color:#0f172a;
   flex:1;
 }
 
 .deal-score{
   background:linear-gradient(135deg,#22c55e,#16a34a);
   color:white;
-  padding:7px 12px;
+  padding:8px 12px;
   border-radius:999px;
-  font-size:11px;
-  font-weight:800;
+  font-size:12px;
+  font-weight:900;
   white-space:nowrap;
-  box-shadow:0 4px 14px rgba(34,197,94,.25);
 }
 
 .car-price{
-  font-size:32px;
+  font-size:34px;
   font-weight:900;
   color:#16a34a;
   margin-top:18px;
   letter-spacing:-1px;
+}
+
+.market-badge{
+  display:inline-flex;
+  margin-top:12px;
+  padding:8px 14px;
+  border-radius:999px;
+  background:#dcfce7;
+  color:#15803d;
+  font-size:13px;
+  font-weight:900;
+}
+
+.profit-box{
+  margin-top:14px;
+  padding:16px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#f0fdf4,#ffffff);
+  border:1px solid #bbf7d0;
+}
+
+.profit-label{
+  font-size:13px;
+  color:#166534;
+  font-weight:700;
+}
+
+.profit-value{
+  margin-top:6px;
+  font-size:28px;
+  color:#16a34a;
+  font-weight:900;
 }
 
 .car-grid{
@@ -159,82 +150,94 @@ body{
 
 .car-info{
   background:#f8fafc;
-  border-radius:16px;
-  padding:12px;
+  border-radius:18px;
+  padding:14px;
 }
 
 .car-label{
   font-size:11px;
   color:#94a3b8;
-  font-weight:700;
-  margin-bottom:4px;
+  font-weight:800;
+  margin-bottom:6px;
   text-transform:uppercase;
-  letter-spacing:.5px;
 }
 
 .car-value{
   font-size:14px;
   font-weight:800;
-  color:#0f172a;
+  line-height:1.4;
 }
 
 .car-actions{
   display:flex;
   gap:10px;
-  margin-top:18px;
+  margin-top:20px;
 }
 
 .fav-btn{
-  width:54px;
-  height:54px;
+  width:56px;
+  height:56px;
   border:none;
-  border-radius:16px;
+  border-radius:18px;
   background:#f1f5f9;
   font-size:20px;
 }
 
 .open-btn{
   flex:1;
-  height:54px;
+  height:56px;
   border:none;
-  border-radius:16px;
+  border-radius:18px;
   background:linear-gradient(135deg,#16a34a,#22c55e);
   color:white;
-  font-size:15px;
-  font-weight:900;
   text-decoration:none;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow:0 8px 20px rgba(34,197,94,.25);
-}
-
-.open-btn:active{
-  transform:scale(.98);
+  font-size:15px;
+  font-weight:900;
 }
 
 .error-box{
-  background:#ffffff;
+  background:#fff;
   border-radius:24px;
   padding:24px;
   text-align:center;
-  border:1px solid #fee2e2;
 }
 
 .error-title{
   font-size:20px;
   font-weight:900;
   color:#dc2626;
-  margin-bottom:8px;
 }
 
 .error-sub{
+  margin-top:10px;
   color:#64748b;
-  font-size:14px;
   line-height:1.5;
 }
 
 </style>
+
+</head>
+
+<body>
+
+<div class="section-title">
+  🔥 AutoScan AI — выгодные авто
+</div>
+
+<div id="cars">
+
+  <div class="loading-wrap">
+    <div class="loader"></div>
+
+    <div class="loading-text">
+      Анализируем рынок автомобилей...
+    </div>
+  </div>
+
+</div>
 
 <script>
 
@@ -242,19 +245,10 @@ async function loadCars(){
 
   const container = document.getElementById("cars");
 
-  container.innerHTML = `
-    <div class="loading-wrap">
-      <div class="loader"></div>
-      <div class="loading-text">
-        Ищем выгодные автомобили...
-      </div>
-    </div>
-  `;
-
   try{
 
     const response = await fetch(
-      "/api/search?brand=toyota&budget=2500000"
+      "/api/search?brand=toyota&budget=2500000&only_deals=1"
     );
 
     const data = await response.json();
@@ -265,13 +259,15 @@ async function loadCars(){
 
       container.innerHTML = `
         <div class="error-box">
+
           <div class="error-title">
             Ничего не найдено
           </div>
 
           <div class="error-sub">
-            В базе пока нет подходящих автомобилей.
+            Пока нет выгодных автомобилей.
           </div>
+
         </div>
       `;
 
@@ -280,7 +276,39 @@ async function loadCars(){
 
     data.cars.forEach(car => {
 
-      const score = Math.floor(Math.random() * 12) + 88;
+      const price =
+        Number(car.price || 0)
+        .toLocaleString("ru-RU");
+
+      const avgRf =
+        Number(car.avg_price_rf || 0)
+        .toLocaleString("ru-RU");
+
+      const avgRegion =
+        Number(car.avg_price_region || 0)
+        .toLocaleString("ru-RU");
+
+      const minRf =
+        Number(car.min_price_rf || 0)
+        .toLocaleString("ru-RU");
+
+      const maxRf =
+        Number(car.max_price_rf || 0)
+        .toLocaleString("ru-RU");
+
+      const mileage =
+        Number(car.mileage || 0)
+        .toLocaleString("ru-RU");
+
+      const below =
+        car.below_market_percent || 0;
+
+      const potential =
+        Number(car.resale_potential || 0)
+        .toLocaleString("ru-RU");
+
+      const score =
+        car.deal_score || 0;
 
       const card = document.createElement("div");
 
@@ -301,10 +329,66 @@ async function loadCars(){
         </div>
 
         <div class="car-price">
-          ${Number(car.price || 0).toLocaleString("ru-RU")} ₽
+          ${price} ₽
+        </div>
+
+        <div class="market-badge">
+          📉 Ниже рынка на ${below}%
+        </div>
+
+        <div class="profit-box">
+
+          <div class="profit-label">
+            Потенциал перепродажи
+          </div>
+
+          <div class="profit-value">
+            +${potential} ₽
+          </div>
+
         </div>
 
         <div class="car-grid">
+
+          <div class="car-info">
+            <div class="car-label">
+              Средняя РФ
+            </div>
+
+            <div class="car-value">
+              ${avgRf} ₽
+            </div>
+          </div>
+
+          <div class="car-info">
+            <div class="car-label">
+              Средняя регион
+            </div>
+
+            <div class="car-value">
+              ${avgRegion} ₽
+            </div>
+          </div>
+
+          <div class="car-info">
+            <div class="car-label">
+              Мин РФ
+            </div>
+
+            <div class="car-value">
+              ${minRf} ₽
+            </div>
+          </div>
+
+          <div class="car-info">
+            <div class="car-label">
+              Макс РФ
+            </div>
+
+            <div class="car-value">
+              ${maxRf} ₽
+            </div>
+          </div>
 
           <div class="car-info">
             <div class="car-label">
@@ -318,31 +402,11 @@ async function loadCars(){
 
           <div class="car-info">
             <div class="car-label">
-              Год
+              Год / пробег
             </div>
 
             <div class="car-value">
-              ${car.year || "-"}
-            </div>
-          </div>
-
-          <div class="car-info">
-            <div class="car-label">
-              Пробег
-            </div>
-
-            <div class="car-value">
-              ${(car.mileage || 0).toLocaleString("ru-RU")} км
-            </div>
-          </div>
-
-          <div class="car-info">
-            <div class="car-label">
-              Статус
-            </div>
-
-            <div class="car-value">
-              Ниже рынка
+              ${car.year || "-"} · ${mileage} км
             </div>
           </div>
 
@@ -363,6 +427,7 @@ async function loadCars(){
           </a>
 
         </div>
+
       `;
 
       container.appendChild(card);
@@ -393,3 +458,5 @@ loadCars();
 
 </script>
 
+</body>
+</html>
