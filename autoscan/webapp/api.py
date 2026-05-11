@@ -458,15 +458,19 @@ async def api_search(request):
 
     cars = sorted(
 
-        cars,
+    cars,
 
-        key=lambda x: (
-            x.get("deal_score", 0),
-            x.get("resale_potential", 0)
-        ),
+    key=lambda x: (
 
-        reverse=True
+        0 if x.get("image_url") else 1,
+
+        -x.get("deal_score", 0),
+
+        -x.get("resale_potential", 0)
+
     )
+
+)
 
     cars = cars[:20]
 
