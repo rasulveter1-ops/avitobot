@@ -68,13 +68,31 @@ body{
 .car-card{
   background:#fff;
   border-radius:28px;
-  padding:22px;
-  margin-bottom:20px;
+  overflow:hidden;
+  margin-bottom:22px;
   border:1px solid #e2e8f0;
 
   box-shadow:
     0 10px 30px rgba(15,23,42,.05),
     0 2px 10px rgba(15,23,42,.03);
+}
+
+.car-image-wrap{
+  width:100%;
+  height:240px;
+  background:#e2e8f0;
+  overflow:hidden;
+}
+
+.car-image{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.car-content{
+  padding:22px;
 }
 
 .car-top{
@@ -230,11 +248,13 @@ body{
 <div id="cars">
 
   <div class="loading-wrap">
+
     <div class="loader"></div>
 
     <div class="loading-text">
       Анализируем рынок автомобилей...
     </div>
+
   </div>
 
 </div>
@@ -316,115 +336,145 @@ async function loadCars(){
 
       card.innerHTML = `
 
-        <div class="car-top">
+        ${car.image_url ? `
 
-          <div class="car-title">
-            ${car.title || "Без названия"}
-          </div>
+        <div class="car-image-wrap">
 
-          <div class="deal-score">
-            AI ${score}
-          </div>
-
-        </div>
-
-        <div class="car-price">
-          ${price} ₽
-        </div>
-
-        <div class="market-badge">
-          📉 Ниже рынка на ${below}%
-        </div>
-
-        <div class="profit-box">
-
-          <div class="profit-label">
-            Потенциал перепродажи
-          </div>
-
-          <div class="profit-value">
-            +${potential} ₽
-          </div>
-
-        </div>
-
-        <div class="car-grid">
-
-          <div class="car-info">
-            <div class="car-label">
-              Средняя РФ
-            </div>
-
-            <div class="car-value">
-              ${avgRf} ₽
-            </div>
-          </div>
-
-          <div class="car-info">
-            <div class="car-label">
-              Средняя регион
-            </div>
-
-            <div class="car-value">
-              ${avgRegion} ₽
-            </div>
-          </div>
-
-          <div class="car-info">
-            <div class="car-label">
-              Мин РФ
-            </div>
-
-            <div class="car-value">
-              ${minRf} ₽
-            </div>
-          </div>
-
-          <div class="car-info">
-            <div class="car-label">
-              Макс РФ
-            </div>
-
-            <div class="car-value">
-              ${maxRf} ₽
-            </div>
-          </div>
-
-          <div class="car-info">
-            <div class="car-label">
-              Город
-            </div>
-
-            <div class="car-value">
-              ${car.city || "-"}
-            </div>
-          </div>
-
-          <div class="car-info">
-            <div class="car-label">
-              Год / пробег
-            </div>
-
-            <div class="car-value">
-              ${car.year || "-"} · ${mileage} км
-            </div>
-          </div>
-
-        </div>
-
-        <div class="car-actions">
-
-          <button class="fav-btn">
-            ⭐
-          </button>
-
-          <a
-            href="${car.url}"
-            target="_blank"
-            class="open-btn"
+          <img
+            src="${car.image_url}"
+            class="car-image"
+            loading="lazy"
           >
-            Открыть Авито
-          </a>
+
+        </div>
+
+        ` : ``}
+
+        <div class="car-content">
+
+          <div class="car-top">
+
+            <div class="car-title">
+              ${car.title || "Без названия"}
+            </div>
+
+            <div class="deal-score">
+              AI ${score}
+            </div>
+
+          </div>
+
+          <div class="car-price">
+            ${price} ₽
+          </div>
+
+          <div class="market-badge">
+            📉 Ниже рынка на ${below}%
+          </div>
+
+          <div class="profit-box">
+
+            <div class="profit-label">
+              Потенциал перепродажи
+            </div>
+
+            <div class="profit-value">
+              +${potential} ₽
+            </div>
+
+          </div>
+
+          <div class="car-grid">
+
+            <div class="car-info">
+
+              <div class="car-label">
+                Средняя РФ
+              </div>
+
+              <div class="car-value">
+                ${avgRf} ₽
+              </div>
+
+            </div>
+
+            <div class="car-info">
+
+              <div class="car-label">
+                Средняя регион
+              </div>
+
+              <div class="car-value">
+                ${avgRegion} ₽
+              </div>
+
+            </div>
+
+            <div class="car-info">
+
+              <div class="car-label">
+                Мин РФ
+              </div>
+
+              <div class="car-value">
+                ${minRf} ₽
+              </div>
+
+            </div>
+
+            <div class="car-info">
+
+              <div class="car-label">
+                Макс РФ
+              </div>
+
+              <div class="car-value">
+                ${maxRf} ₽
+              </div>
+
+            </div>
+
+            <div class="car-info">
+
+              <div class="car-label">
+                Город
+              </div>
+
+              <div class="car-value">
+                ${car.city || "-"}
+              </div>
+
+            </div>
+
+            <div class="car-info">
+
+              <div class="car-label">
+                Год / пробег
+              </div>
+
+              <div class="car-value">
+                ${car.year || "-"} · ${mileage} км
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="car-actions">
+
+            <button class="fav-btn">
+              ⭐
+            </button>
+
+            <a
+              href="${car.url}"
+              target="_blank"
+              class="open-btn"
+            >
+              Открыть Авито
+            </a>
+
+          </div>
 
         </div>
 
@@ -439,6 +489,7 @@ async function loadCars(){
     console.log(e);
 
     container.innerHTML = `
+
       <div class="error-box">
 
         <div class="error-title">
@@ -450,6 +501,7 @@ async function loadCars(){
         </div>
 
       </div>
+
     `;
   }
 }
